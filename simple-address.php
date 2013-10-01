@@ -77,8 +77,8 @@ function simple_address_box ($post) {
       echo '<p>' . __('Current url', 'simple_address') . ': <br /><a href=' . $link . ' target="_blank">' . $link .'</a></p>';
     }
   ?>
-  <input type="text" id="simple_address_field" name="simple_address_field" value="<?= esc_attr($value); ?>" size="25" />
-  <p><i><?= __('This will not override any existing permalinks for posts or pages.', 'simple_address'); ?></i></p>
+  <input type="text" id="simple_address_field" name="simple_address_field" value="<?php echo esc_attr($value); ?>" size="25" />
+  <p><i><?php echo __('This will not override any existing permalinks for posts or pages.', 'simple_address'); ?></i></p>
   <?php
 }
 

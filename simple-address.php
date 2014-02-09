@@ -47,8 +47,9 @@ register_uninstall_hook(__FILE__, 'simple_address_uninstall');
  */
 
 function simple_address_meta_box () {
-  $post_types = array('post', 'page');
-  foreach ($post_types as $post_type) {
+  // Get the current post types where Simple address will be visible.
+  $simple_address_post_types = get_simple_address_post_types();
+  foreach ($simple_address_post_types as $post_type) {
     add_meta_box(
       'simple_address',
       __('Simple address', 'simple_address'),
@@ -205,9 +206,9 @@ function get_simple_address_by_address ($address) {
 function simple_address_router ($query) {
   $request = $query->request;
   if (preg_match('/^[a-zA-Z0-9\-\_]+$/', $request) && !in_array($request, array('wp-admin', 'wp-content'))) {
-    $id = get_simple_address_redirect($request);
-    if (!empty($id)) {
-      $url = get_permalink($id);
+    $address = get_simple_address_by_address($request);
+    if (!empty($address)) {
+      $url = get_permalink($address->post_id);
       if (!empty($url)) {
         header('HTTP/1.1 301 Moved Permanently');
         header('Location: ' . $url);
@@ -257,3 +258,103 @@ function simple_address_redirect_location ($location) {
 }
 
 add_filter('redirect_post_location','simple_address_redirect_location', 10, 2);
+
+/**
+ * Get array of post types where Simple address meta box will be visible.
+ *
+ * @return array
+ */
+
+function get_simple_address_post_types () {
+  $value = get_option('simple_address_post_types');
+
+  if (!is_array($value)) {
+    $value = array();
+  }
+
+  // Add default post types if the value if empty.
+  if (empty($value)) {
+    $value = array('post', 'page');
+  }
+
+  return $value;
+}
+
+/**
+ * Update Simple address post types array.
+ *
+ * @param array $post_types
+ */
+
+function update_simple_address_post_types ($post_types) {
+  if (!is_array($post_types)) return;
+  update_option('simple_address_post_types', $post_types);
+}
+
+/**
+ * Simple address options page.
+ */
+
+function simple_address_options () {
+  // Update where Simple address meta box will be visible.
+  if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['simple_address_action']) && $_POST['simple_address_action'] === 'update') {
+    $post_types = $_POST['simple-address-post-types'];
+    update_simple_address_post_types($post_types);
+  }
+
+  // Get the current post types where Simple address will be visible.
+  $simple_address_post_types = get_simple_address_post_types();
+
+  screen_icon();
+  ?>
+  <h2><?php echo __('Simple address', 'simple-address'); ?> <?php echo __('settings', 'simple-address'); ?></h2>
+  <div class="wrap">
+    <form method="post" action="<?php echo $_SERVER['REQUEST_URI']; ?>">
+      <?php wp_nonce_field('update-options'); ?>
+      <h3><?php echo __("Select where to show Simple address meta box", 'simple-address'); ?></h3>
+      <table class="form-table">
+        <tbody>
+        <?php
+        $post_types = get_post_types(array(
+          'show_ui' => true
+        ), 'objects');
+
+        foreach ($post_types as $post_type) {
+          $name = $post_type->name;
+          if ($name === 'attachment') {
+            // No support for media/attachment
+            continue;
+          } ?>
+          <tr>
+            <th scope="row">
+              <?php echo $post_type->label; ?>
+            </th>
+            <td>
+              <p>
+                <?php $checked = (in_array($name, $simple_address_post_types)) ? ' checked="checked" ' : ''; ?>
+                <input type="checkbox" <?php echo $checked; ?> name="simple-address-post-types[]" value="<?php echo $name; ?>" id="simple-address-show-<?php echo $name; ?>" />
+              </p>
+            </td>
+          </tr>
+        <?php } ?>
+        </tbody>
+      </table>
+      <input type="hidden" name="action" value="update" />
+      <input type="hidden" name="simple_address_action" value="update" />
+      <p class="submit">
+        <input type="submit" class="button-primary" value="<?php echo __('Save Changes', 'simple-address'); ?>" />
+      </p>
+    </form>
+  </div>
+<?php
+}
+
+/**
+ * Simple address menu, add options page.
+ */
+
+function simple_address_menu () {
+  add_submenu_page('options-general.php', 'Simple address', 'Simple address', 'administrator', 'simple-address-options', 'simple_address_options');
+}
+
+add_action('admin_menu', 'simple_address_menu');

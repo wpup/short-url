@@ -7,5 +7,4 @@ Simple address meta box for WordPress. Like in EPiServer. **This plugin is not y
 
 ## Todo
 
-* Fix validation/error message
 * Test it some more

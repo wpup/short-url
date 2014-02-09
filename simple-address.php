@@ -205,20 +205,36 @@ function get_simple_address_by_address ($address) {
 
 function simple_address_router ($query) {
   $request = $query->request;
-  if (preg_match('/^[a-zA-Z0-9\-\_]+$/', $request) && !in_array($request, array('wp-admin', 'wp-content'))) {
-    $address = get_simple_address_by_address($request);
-    if (!empty($address)) {
-      $url = get_permalink($address->post_id);
-      if (!empty($url)) {
-        header('HTTP/1.1 301 Moved Permanently');
-        header('Location: ' . $url);
-        exit;
-      }
-      return $query;
-    }
+  $req_uri = $_SERVER['REQUEST_URI'];
+
+  // If the request uri ends with a slash it should
+  if ($req_uri[strlen($req_uri) - 1] === '/') {
     return $query;
   }
-  return $query;
+
+  // If the request don't match with the regex or match 'wp-admin' or 'wp-content' should we not proceeed with the redirect.
+  if (!preg_match('/^[a-zA-Z0-9\-\_]+$/', $request) && in_array($request, array('wp-admin', 'wp-content'))) {
+    return $query;
+  }
+
+  $address = get_simple_address_by_address($request);
+
+  // If the object is null or empty we should not proceed with the redirect.
+  if (is_null($address) || empty($address)) {
+    return $query;
+  }
+
+  $url = get_permalink($address->post_id);
+
+  // If the url is false or empty we should not proceed with the redirect.
+  if ($url === false || empty($url)) {
+    return $query;
+  }
+
+  // Let's redirect baby!
+  header('HTTP/1.1 301 Moved Permanently');
+  header('Location: ' . $url);
+  exit;
 }
 
 add_action('send_headers', 'simple_address_router', 10, 2);

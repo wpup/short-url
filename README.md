@@ -1,4 +1,4 @@
-simple-address
+Simple address
 ==============
 
 Simple address meta box for WordPress. Like in EPiServer.

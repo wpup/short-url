@@ -9,7 +9,7 @@
  * Plugin URI: https://github.com/frozzare/simple-address
  */
 
-if (!defined('SIMPLE_ADDRESS_DB_VERSION')) define('SIMPLE_ADDRESS_DB_VERSION', '1.0');
+if (!defined('SIMPLE_ADDRESS_DB_VERSION')) define('SIMPLE_ADDRESS_DB_VERSION', '1.0.0');
 
 /**
  * Install the Simple address table.

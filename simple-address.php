@@ -5,7 +5,7 @@
  * Description:
  * Author: Fredrik Forsmo
  * Author URI: http://forsmo.me/
- * Version: 1.0
+ * Version: 1.0.
  * Plugin URI: https://github.com/frozzare/simple-address
  */
 

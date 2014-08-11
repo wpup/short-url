@@ -12,6 +12,16 @@
 if (!defined('SIMPLE_ADDRESS_DB_VERSION')) define('SIMPLE_ADDRESS_DB_VERSION', '1.0.0');
 
 /**
+ * Load languages.
+ */
+
+function simple_address_languages () {
+  load_plugin_textdomain('simple_address', false, dirname(plugin_basename(__FILE__)) . '/languages/');
+}
+
+add_action('init', 'simple_address_languages');
+
+/**
  * Install the Simple address table.
  */
 
@@ -248,7 +258,7 @@ function simple_address_error_notice () {
     if (!session_id()) session_start();
     if (isset($_SESSION['simple_address_error'])) {
       echo '<div class="error">';
-      echo '<p>' . __('Simple address error', 'simple_address') . ': ' . $_SESSION['simple_address_error'] . '</p>';
+      echo '<p>' . __('Simple address: error', 'simple_address') . ': ' . $_SESSION['simple_address_error'] . '</p>';
       echo '</div>';
       unset($_SESSION['simple_address_error']);
     }

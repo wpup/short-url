@@ -226,7 +226,7 @@ class Simple_Address {
 				display: none;
 			}
 
-			.simple-address-field input[type="text"] {
+			.simple-address-edit input[type="text"] {
 				width: 82%;
 			}
 		</style>
@@ -248,20 +248,21 @@ class Simple_Address {
 				 *  Change view to edit view when a user hits edit button.
 				 */
 
-				$('body').on('click', '.simple-address-edit', function (e) {
+				$('body').on('click', '.simple-address-edit-button', function (e) {
 					e.preventDefault();
 					$(this).parent().hide();
-					$('.simple-address-field').show();
+					$('.simple-address-edit').show();
 				});
 
-                /**
-                 * Update the Simple address when a user hits ok button.
-                 */
+				/**
+				 * Update the Simple address when a user hits ok button.
+				 */
 
-				$('body').on('click', '.simple-address-ok', function (e) {
+				$('body').on('click', '.simple-address-ok-button', function (e) {
 					e.preventDefault();
 					var $input = $(this).prev(),
-						$view = $('.simple-address-view'),
+					    $view = $('.simple-address-view'),
+					    $error = $('.simple-address-error'),
 					    data = {
 						    action: 'generate_simple_address',
 						    value: $input.val(),
@@ -270,11 +271,24 @@ class Simple_Address {
 
 					$.post(window.ajaxurl, data, function (res) {
 						res = $.parseJSON(res);
-						if (typeof res === 'object' && 'value' in res) {
-							$('.simple-address-field').hide();
-							$view.find('a:first-child span').text(res.value);
+
+						if (typeof res !== 'object' || res.value === undefined) {
+							return;
+						}
+
+						$('.simple-address-edit').hide();
+
+						if (res.value.length) {
+							var $link = $view.find('a:first-child'),
+							    homeUrl = $('#simple-address-home-url').val();
+
+							$link.attr('href', homeUrl + res.value);
+							$link.find('span').text(res.value);
+
 							$input.val(res.value);
 							$view.show();
+						} else {
+							$error.show();
 						}
 					});
 				});
@@ -292,35 +306,40 @@ class Simple_Address {
 
 	public function post_submitbox_misc_actions() {
 		global $post;
-		$value = $this->get_simple_address( $post->ID );
+		$value    = $this->get_simple_address( $post->ID );
+		$home_url = get_home_url();
+		$home_url = ( $home_url[ strlen( $home_url ) - 1 ] == '/' ? $home_url : $home_url . '/' );
 		?>
 		<div class="misc-pub-section simple-address">
 			<label><strong><?php _e( 'Simple address', 'simple-address' ); ?></strong></label>
 
-			<?php
-			$url  = get_home_url();
-			$link = ( $url[ strlen( $url ) - 1 ] == '/' ? $url : $url . '/' );
-			?>
-			<p class="simple-address-view <?php echo empty( $value ) ? 'hide' : ''; ?>">
-				<a href="<?php echo $link . $value; ?>"><?php echo $link; ?><span><?php echo $value; ?></span></a>
-				<a class="button simple-address-edit">Edit</a>
+			<p class="simple-address-error hide">
+				<?php _e( 'No simple address exists', 'simple-address' ); ?>
+				<a class="button simple-address-edit-button">Edit</a>
 			</p>
 
-			<div class="simple-address-field <?php echo empty( $value ) ? '' : 'hide'; ?>">
+			<p class="simple-address-view <?php echo empty( $value ) ? 'hide' : ''; ?>">
+				<a href="<?php echo $home_url . $value; ?>"><?php echo $home_url; ?>
+					<span><?php echo $value; ?></span></a>
+				<a class="button simple-address-edit-button">Edit</a>
+			</p>
+
+			<div class="simple-address-edit <?php echo empty( $value ) ? '' : 'hide'; ?>">
 				<p>
 					<input type="text" id="simple_address_field" name="simple_address_field"
 					       value="<?php echo esc_attr( $value ); ?>"/>
 
-					<a href="#" class="button simple-address-ok"><?php _e( 'OK' ); ?></a>
+					<a href="#" class="button simple-address-ok-button"><?php _e( 'OK' ); ?></a>
 
 				</p>
 
 				<p>
 					<i><?php echo __( 'This will not override any existing permalinks for posts, pages or custom post types.', 'simple_address' ); ?></i>
 				</p>
-
-				<?php wp_nonce_field( basename( __FILE__ ), 'simple_address_box_nonce' ); ?>
 			</div>
+
+			<input type="hidden" id="simple-address-home-url" value="<?php echo $home_url; ?>"/>
+			<?php wp_nonce_field( basename( __FILE__ ), 'simple_address_box_nonce' ); ?>
 		</div>
 	<?php
 	}
@@ -356,7 +375,7 @@ class Simple_Address {
 
 		$value = $_POST['simple_address_field'];
 
-		if (empty($value)) {
+		if ( empty( $value ) ) {
 			return $post_id;
 		}
 
@@ -424,8 +443,12 @@ class Simple_Address {
 		$value   = isset( $_POST['value'] ) ? $_POST['value'] : '';
 		$post_id = isset( $_POST['post_id'] ) ? $_POST['post_id'] : 0;
 
+		if ( ! empty( $value ) ) {
+			$value = $this->generate_simple_address( $value, $post_id );
+		}
+
 		echo json_encode( array(
-			'value' => $this->generate_simple_address( $value, $post_id )
+			'value' => $value
 		) );
 
 		exit;

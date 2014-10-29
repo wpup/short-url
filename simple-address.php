@@ -278,7 +278,7 @@ class Simple_Address {
 						}
 					});
 				});
-				
+
 			})(window.jQuery);
 		</script>
 	<?php
@@ -354,7 +354,13 @@ class Simple_Address {
 			return $post_id;
 		}
 
-		$value      = $this->generate_simple_address( $_POST['simple_address_field'], $post_id );
+		$value = $_POST['simple_address_field'];
+
+		if (empty($value)) {
+			return $post_id;
+		}
+
+		$value      = $this->generate_simple_address( $value, $post_id );
 		$meta_value = $this->get_simple_address( $post_id );
 
 		wp_cache_delete( $this->cache_key );

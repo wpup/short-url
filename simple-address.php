@@ -214,11 +214,11 @@ class Simple_Address {
 	public function admin_head() {
 		?>
 		<style type="text/css">
-			.simple-address-view a:first-child {
+			.simple-address-show-view a:first-child {
 				color: #666;
 			}
 
-			.simple-address-view a span {
+			.simple-address-show-view a span {
 				background: #FFFBCC;
 			}
 
@@ -226,7 +226,7 @@ class Simple_Address {
 				display: none;
 			}
 
-			.simple-address-edit input[type="text"] {
+			.simple-address-edit-view input[type="text"] {
 				width: 82%;
 			}
 		</style>
@@ -261,8 +261,8 @@ class Simple_Address {
 				$('body').on('click', '.simple-address-ok-button', function (e) {
 					e.preventDefault();
 					var $input = $(this).prev(),
-					    $view = $('.simple-address-view'),
-					    $error = $('.simple-address-error'),
+					    $showView = $('.simple-address-show-view'),
+					    $errorView = $('.simple-address-error-view'),
 					    data = {
 						    action: 'generate_simple_address',
 						    value: $input.val(),
@@ -276,19 +276,19 @@ class Simple_Address {
 							return;
 						}
 
-						$('.simple-address-edit').hide();
+						$('.simple-address-edit-view').hide();
 
 						if (res.value.length) {
-							var $link = $view.find('a:first-child'),
+							var $link = $showView.find('a:first-child'),
 							    homeUrl = $('#simple-address-home-url').val();
 
 							$link.attr('href', homeUrl + res.value);
 							$link.find('span').text(res.value);
 
 							$input.val(res.value);
-							$view.show();
+							$showView.show();
 						} else {
-							$error.show();
+							$errorView.show();
 						}
 					});
 				});
@@ -313,18 +313,18 @@ class Simple_Address {
 		<div class="misc-pub-section simple-address">
 			<label><strong><?php _e( 'Simple address', 'simple-address' ); ?></strong></label>
 
-			<p class="simple-address-error hide">
+			<p class="simple-address-error-view hide">
 				<?php _e( 'No simple address exists', 'simple-address' ); ?>
 				<a class="button simple-address-edit-button">Edit</a>
 			</p>
 
-			<p class="simple-address-view <?php echo empty( $value ) ? 'hide' : ''; ?>">
-				<a href="<?php echo $home_url . $value; ?>"><?php echo $home_url; ?>
-					<span><?php echo $value; ?></span></a>
+			<p class="simple-address-show-view <?php echo empty( $value ) ? 'hide' : ''; ?>">
+				<a href="<?php echo $home_url . $value; ?>">
+					<?php echo $home_url; ?><span><?php echo $value; ?></span></a>
 				<a class="button simple-address-edit-button">Edit</a>
 			</p>
 
-			<div class="simple-address-edit <?php echo empty( $value ) ? '' : 'hide'; ?>">
+			<div class="simple-address-edit-view <?php echo empty( $value ) ? '' : 'hide'; ?>">
 				<p>
 					<input type="text" id="simple_address_field" name="simple_address_field"
 					       value="<?php echo esc_attr( $value ); ?>"/>

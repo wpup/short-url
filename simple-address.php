@@ -2,405 +2,434 @@
 
 /**
  * Plugin Name: Simple address
- * Description:
+ * Description: Simple address to the permalink, like in EPiServer.
  * Author: Fredrik Forsmo
  * Author URI: http://forsmo.me/
- * Version: 1.0.0
+ * Version: 2.0.0
  * Plugin URI: https://github.com/frozzare/simple-address
  */
+class Simple_Address {
 
-if ( ! defined( 'SIMPLE_ADDRESS_DB_VERSION' ) ) {
-	define( 'SIMPLE_ADDRESS_DB_VERSION', '1.0.0' );
-}
+	/**
+	 * The instance of Simple address.
+	 *
+	 * @var Simple_Address|null
+	 */
 
-/**
- * Load languages.
- */
+	private static $instance;
 
-function simple_address_languages() {
-	load_plugin_textdomain( 'simple_address', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
-}
+	/**
+	 * The cache key that is used by Simple address.
+	 *
+	 * @var string
+	 * @since 2.0.0
+	 */
 
-add_action( 'init', 'simple_address_languages' );
+	private $cache_key = '_simple_address_query';
 
-/**
- * Install the Simple address table.
- */
+	/**
+	 * The post meta key that is used by Simple address.
+	 *
+	 * @var string
+	 * @since 2.0.0
+	 */
 
-function simple_address_install() {
-	global $wpdb;
-	$table_name = $wpdb->prefix . 'simple_address';
-	$sql        = "CREATE TABLE $table_name (
-    id bigint(20) NOT NULL AUTO_INCREMENT,
-    post_id bigint(20) NOT NULL,
-    simple_address varchar(200) NOT NULL,
-    UNIQUE KEY id (id)
-  );";
-	require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
-	dbDelta( $sql );
-	add_option( 'simple_address_db_version', SIMPLE_ADDRESS_DB_VERSION );
-}
+	private $meta_key = '_simple_address';
 
-/**
- * Uninstall Simple adress table.
- */
+	/**
+	 * Simple address version.
+	 *
+	 * @var string
+	 * @since 2.0.0
+	 */
 
-function simple_address_uninstall() {
-	global $wpdb;
-	delete_option( 'simple_address_db_version' );
-	$wpdb->query( 'DROP TABLE IF EXISTS ' . $wpdb->prefix . 'simple_address' );
-}
+	private $version = '2.0.0';
 
-register_activation_hook( __FILE__, 'simple_address_install' );
-register_uninstall_hook( __FILE__, 'simple_address_uninstall' );
+	/**
+	 * Find post by post name.
+	 *
+	 * @param $post_name
+	 *
+	 * @since 2.0.0
+	 *
+	 * @return mixed
+	 */
 
-/**
- * Add Simple address meta box.
- */
+	private function find_post( $post_name ) {
+		global $wpdb;
+		$query   = $wpdb->prepare( "SELECT * FROM wp_posts WHERE post_name = %s", $post_name );
+		$results = $wpdb->get_results( $query );
 
-function simple_address_meta_box() {
-	// Get the current post types where Simple address will be visible.
-	$simple_address_post_types = get_simple_address_post_types();
-	foreach ( $simple_address_post_types as $post_type ) {
-		add_meta_box(
-			'simple_address',
-			__( 'Simple address', 'simple_address' ),
-			'simple_address_box',
-			$post_type,
-			'side',
-			''
-		);
-	}
-}
-
-add_action( 'add_meta_boxes', 'simple_address_meta_box' );
-
-/**
- * Render the meta box for Simple address.
- *
- * @param object $post
- */
-
-function simple_address_box( $post ) {
-	global $wpdb;
-	wp_nonce_field( 'simple_address_box', 'simple_address_box_nonce' );
-	$value = $wpdb->get_results( 'SELECT simple_address FROM ' . $wpdb->prefix . 'simple_address WHERE post_id=' . $post->ID );
-	$value = ! empty( $value ) ? $value[0]->simple_address : '';
-	?>
-	<?php
-	if ( ! empty( $value ) ) {
-		$url  = get_site_url();
-		$link = ( $url[ strlen( $url ) - 1 ] == '/' ? $url : $url . '/' ) . $value;
-		echo '<p>' . __( 'Current url', 'simple_address' ) . ': <br /><a href=' . $link . ' target="_blank">' . $link . '</a></p>';
-	}
-	?>
-	<input type="text" id="simple_address_field" name="simple_address_field" value="<?php echo esc_attr( $value ); ?>"
-	       size="25"/>
-	<p>
-		<i><?php echo __( 'This will not override any existing permalinks for posts or pages.', 'simple_address' ); ?></i>
-	</p>
-	<?php
-	echo wp_nonce_field( basename( __FILE__ ), 'simple_address_box_nonce', true, false );
-}
-
-/**
- * Save the Simple address.
- *
- * @param int $post_id
- */
-
-function simple_address_save_postdata( $post_id ) {
-	// Check if our nonce is set.
-	if ( ! isset( $_POST['simple_address_box_nonce'] ) ) {
-		return $post_id;
+		return array_shift( $results );
 	}
 
-	// Verify that the nonce is valid.
-	if ( ! wp_verify_nonce( $_POST['simple_address_box_nonce'], basename( __FILE__ ) ) ) {
-		return $post_id;
-	}
+	/**
+	 * Get all posts with the given Simple address.
+	 *
+	 * @param string $simple_address
+	 * @param bool $no_cache
+	 *
+	 * @since 2.0.0
+	 * @access private
+	 *
+	 * @return mixed
+	 */
 
-	// If this is an autosave, our form has not been submitted, so we don't want to do anything.
-	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-		return $post_id;
-	}
+	private function get_posts( $simple_address, $no_cache = false ) {
+		$posts = wp_cache_get( $this->cache_key );
 
-	// Check the user's permissions.
-	if ( ! current_user_can( ( $_POST['post_type'] == 'page' ? 'edit_page' : 'edit_post' ), $post_id ) ) {
-		return $post_id;
-	}
+		if ( empty( $posts ) || $no_cache ) {
+			$args = array(
+				'meta_key'   => $this->meta_key,
+				'meta_value' => $simple_address
+			);
 
-	// OK, its safe for us to save the data now.
-	global $wpdb;
-	$table = $wpdb->prefix . 'simple_address';
+			$query = new WP_Query( $args );
+			$posts = $query->get_posts();
 
-	// If the value is empty we should delete to old if it's exists.
-	if ( empty( $_POST['simple_address_field'] ) ) {
-		$wpdb->delete( $table, array(
-			'post_id' => $post_id
-		) );
-	} else {
-		// Sanitize user input.
-		$value = sanitize_text_field( $_POST['simple_address_field'] );
-
-		// Check for existing simple address.
-		$dbvalue = get_simple_address_by_address( $value );
-
-		// Fetch existing.
-		if ( is_null( $dbvalue ) ) {
-			$dbvalue = get_simple_address_by_post_id( $post_id );
+			wp_cache_set( $this->cache_key, $posts );
 		}
 
-		// Only add error message if the Simple address exists and don't is the current Simple address.
-		if ( ! is_null( $dbvalue ) && intval( $dbvalue->post_id ) != $post_id ) {
-			if ( ! session_id() ) {
-				session_start();
+		return $posts;
+	}
+
+	/**
+	 * Setup actions.
+	 *
+	 * @since 2.0.0
+	 */
+
+	private function setup_actions() {
+		add_action( 'send_headers', array( $this, 'router' ), 10, 2 );
+
+		if ( is_admin() ) {
+			add_action( 'admin_head', array( $this, 'admin_head' ) );
+			add_action( 'admin_footer', array( $this, 'admin_footer' ) );
+			add_action( 'post_submitbox_misc_actions', array( $this, 'post_submitbox_misc_actions' ) );
+			add_action( 'save_post', array( $this, 'save_post' ) );
+			add_action( 'wp_ajax_generate_simple_address', array( $this, 'generate_simple_address' ) );
+		}
+	}
+
+	/**
+	 * Empty constructor.
+	 *
+	 * @since 2.0.0
+	 */
+
+	public function __construct() {
+		// Empty, don't do anything here.
+	}
+
+	/**
+	 * Get the instance of Simple address class.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @return Simple_Address
+	 */
+
+	public static function instance() {
+		if ( ! isset( self::$instance ) ) {
+			self::$instance = new Simple_Address();
+			self::$instance->setup_actions();
+		}
+
+		return self::$instance;
+	}
+
+	/**
+	 * Cloning is forbidden.
+	 *
+	 * @since 2.0.0
+	 */
+
+	public function __clone() {
+		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'simple-address' ), '2.0.0' );
+	}
+
+	/**
+	 * Unserializing instances of this class is forbidden.
+	 *
+	 * @since 2.0.0
+	 */
+
+	public function __wakeup() {
+		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'simple-address' ), '2.0.0' );
+	}
+
+	/**
+	 * Simple address router.
+	 * Will validation the request path and check so it don't equals `wp-admin`, `wp-content` or `wp`.
+	 * If any simple address exists in the database it will collect the post and try to redirect to the permalink if it not empty.
+	 *
+	 * @param $query
+	 *
+	 * @since 2.0.0
+	 */
+
+	public function router( $query ) {
+		$request = $query->request;
+		$req_uri = $_SERVER['REQUEST_URI'];
+
+		// If the request uri ends with a slash it should
+		if ( $req_uri[ strlen( $req_uri ) - 1 ] === '/' ) {
+			return $query;
+		}
+
+		$paths_to_prevent = apply_filters( 'simple_address_prevent_paths', array( 'wp-admin', 'wp-content', 'wp' ) );
+
+		// If the request don't match with the regex or match 'wp-admin' or 'wp-content' should we not proceeed with the redirect.
+		if ( ! preg_match( '/^[a-zA-Z0-9\-\_]+$/', $request ) && in_array( $request, $paths_to_prevent ) ) {
+			return $query;
+		}
+
+		$posts = $this->get_posts( $request );
+		$post  = array_shift( $posts );
+
+		// Don't allow empty post.
+		if ( empty( $post ) ) {
+			return $query;
+		}
+
+		$url = get_permalink( $post->ID );
+
+		// If the url is false or empty we should not proceed with the redirect.
+		if ( $url === false || empty( $url ) ) {
+			return $query;
+		}
+
+		// Let's redirect baby!
+		header( 'HTTP/1.1 301 Moved Permanently' );
+		header( 'Location: ' . $url );
+		exit;
+	}
+
+	/**
+	 * Output css in admin head.
+	 *
+	 * @since 2.0.0
+	 */
+
+	public function admin_head() {
+		?>
+		<style type="text/css">
+			.simple-address-value a:first-child {
+				color: #666;
 			}
-			$_SESSION['simple_address_error'] = '"' . $value . '" is used on <a href="' . get_permalink( $dbvalue ) . '">' . get_the_title( $dbvalue ) . '</a>';
 
-			return $post_id;
-		}
+			.simple-address-value a span {
+				background: #FFFBCC;
+			}
 
-		// Validate the value before inserting it.
-		if ( ! preg_match( '/^[a-zA-Z0-9\-\_]+$/', $value ) ) {
-			return $post_id;
-		}
+			.simple-address-field.hide {
+				display: none;
+			}
 
-		// Update existing instead of inserting it again.
-		if ( ! is_null( $dbvalue ) && intval( $dbvalue->post_id ) === $post_id ) {
-			$wpdb->update( $table, array(
-				'simple_address' => $value
-			), array(
-				'post_id' => $post_id
-			) );
-		} else {
-			$wpdb->insert( $table, array(
-				'post_id'        => $post_id,
-				'simple_address' => $value
-			) );
-		}
-	}
-}
-
-add_action( 'save_post', 'simple_address_save_postdata' );
-
-/**
- * Get Simple address from the database by post id.
- *
- * @param int $post_id WordPress post id
- *
- * @return object|null
- */
-
-function get_simple_address_by_post_id( $post_id ) {
-	global $wpdb;
-	$value = $wpdb->get_results( 'SELECT * FROM ' . $wpdb->prefix . 'simple_address WHERE post_id="' . $post_id . '"' );
-
-	return ! empty( $value ) ? $value[0] : null;
-}
-
-/**
- * Get Simple address from the database by address.
- *
- * @param string $address Simple address string
- *
- * @return object|null
- */
-
-function get_simple_address_by_address( $address ) {
-	global $wpdb;
-	$value = $wpdb->get_results( 'SELECT * FROM ' . $wpdb->prefix . 'simple_address WHERE simple_address="' . $address . '"' );
-
-	return ! empty( $value ) ? $value[0] : null;
-}
-
-/**
- * Simple address router. Will validation the request path and check so it don't equals `wp-admin` or `wp-content`.
- * If any simple address exists in the database it will collect the id and try to redirect to the permalink if it not empty.
- *
- * @param object $query
- *
- * @return object
- */
-
-function simple_address_router( $query ) {
-	$request = $query->request;
-	$req_uri = $_SERVER['REQUEST_URI'];
-
-	// If the request uri ends with a slash it should
-	if ( $req_uri[ strlen( $req_uri ) - 1 ] === '/' ) {
-		return $query;
+			.simple-address-field input[type="text"] {
+				width: 82%;
+			}
+		</style>
+	<?php
 	}
 
-	// If the request don't match with the regex or match 'wp-admin' or 'wp-content' should we not proceeed with the redirect.
-	if ( ! preg_match( '/^[a-zA-Z0-9\-\_]+$/', $request ) && in_array( $request, array( 'wp-admin', 'wp-content' ) ) ) {
-		return $query;
+	/**
+	 * Output JavaScript in admin footer.
+	 *
+	 * @since 2.0.0
+	 */
+
+	public function admin_footer() {
+		?>
+		<script type="text/javascript">
+			(function ($) {
+				$('body').on('click', '.simple-address-edit', function (e) {
+					e.preventDefault();
+					$(this).parent().hide();
+					$('.simple-address-field').show();
+				});
+
+				$('body').on('click', '.simple-address-ok', function (e) {
+					e.preventDefault();
+					var $value = $('.simple-address-value');
+					$('.simple-address-field').hide();
+					$value.find('a:first-child span').text($(this).prev().val());
+					$value.show();
+
+				});
+			})(window.jQuery);
+		</script>
+	<?php
 	}
 
-	$address = get_simple_address_by_address( $request );
+	/**
+	 * Render the Simple address input field in the post submitbox.
+	 *
+	 * @since 2.0.0
+	 */
 
-	// If the object is null or empty we should not proceed with the redirect.
-	if ( is_null( $address ) || empty( $address ) ) {
-		return $query;
-	}
+	public function post_submitbox_misc_actions() {
+		global $post;
+		$value = $this->get_simple_address( $post->ID );
+		?>
+		<div class="misc-pub-section">
+			<label><strong><?php _e( 'Simple address', 'simple-address' ); ?></strong></label>
 
-	$url = get_permalink( $address->post_id );
+			<?php
+			if ( ! empty( $value ) ) {
+				$url  = get_home_url();
+				$link = ( $url[ strlen( $url ) - 1 ] == '/' ? $url : $url . '/' );
+				?>
+				<p class="simple-address-value">
+					<a href="<?php echo $link . $value; ?>"><?php echo $link; ?><span><?php echo $value; ?></span></a>
+					<a class="button simple-address-edit">Edit</a>
+				</p>
+			<?php
+			}
+			?>
+			<div class="simple-address-field <?php echo empty( $value ) ? '' : 'hide'; ?>">
+				<p>
+					<input type="text" id="simple_address_field" name="simple_address_field"
+					       value="<?php echo esc_attr( $value ); ?>"/>
 
-	// If the url is false or empty we should not proceed with the redirect.
-	if ( $url === false || empty( $url ) ) {
-		return $query;
-	}
+					<a href="#" class="button simple-address-ok"><?php _e( 'OK' ); ?></a>
 
-	// Let's redirect baby!
-	header( 'HTTP/1.1 301 Moved Permanently' );
-	header( 'Location: ' . $url );
-	exit;
-}
+				</p>
 
-add_action( 'send_headers', 'simple_address_router', 10, 2 );
+				<p>
+					<i><?php echo __( 'This will not override any existing permalinks for posts, pages or custom post types.', 'simple_address' ); ?></i>
+				</p>
 
-/**
- * Show error message if we have a error not.
- */
-
-function simple_address_error_notice() {
-	if ( isset( $_SERVER['QUERY_STRING'] ) && preg_match( '/message\=simple\-address/', $_SERVER['QUERY_STRING'] ) ) {
-		if ( ! session_id() ) {
-			session_start();
-		}
-		if ( isset( $_SESSION['simple_address_error'] ) ) {
-			echo '<div class="error">';
-			echo '<p>' . __( 'Simple address: error', 'simple_address' ) . ': ' . $_SESSION['simple_address_error'] . '</p>';
-			echo '</div>';
-			unset( $_SESSION['simple_address_error'] );
-		}
-	}
-}
-
-add_action( 'admin_notices', 'simple_address_error_notice' );
-
-/**
- * Check if we have a error and change the message query string value to "simple-address" so we can show the error.
- *
- * @param string $location
- *
- * @return string
- */
-
-function simple_address_redirect_location( $location ) {
-	if ( ! session_start() ) {
-		session_start();
-	}
-	if ( isset( $_SESSION['simple_address_error'] ) ) {
-		$location = add_query_arg( 'message', 'simple-address', $location );
-	}
-
-	return $location;
-}
-
-add_filter( 'redirect_post_location', 'simple_address_redirect_location', 10, 2 );
-
-/**
- * Get array of post types where Simple address meta box will be visible.
- *
- * @return array
- */
-
-function get_simple_address_post_types() {
-	$value = get_option( 'simple_address_post_types' );
-
-	if ( ! is_array( $value ) ) {
-		$value = array();
-	}
-
-	// Add default post types if the value if empty.
-	if ( empty( $value ) ) {
-		$value = array( 'post', 'page' );
-	}
-
-	return $value;
-}
-
-/**
- * Update Simple address post types array.
- *
- * @param array $post_types
- */
-
-function update_simple_address_post_types( $post_types ) {
-	if ( ! is_array( $post_types ) ) {
-		return;
-	}
-	update_option( 'simple_address_post_types', $post_types );
-}
-
-/**
- * Simple address options page.
- */
-
-function simple_address_options() {
-	// Update where Simple address meta box will be visible.
-	if ( $_SERVER['REQUEST_METHOD'] === 'POST' && isset( $_POST['simple_address_action'] ) && $_POST['simple_address_action'] === 'update' ) {
-		$post_types = $_POST['simple-address-post-types'];
-		update_simple_address_post_types( $post_types );
-	}
-
-	// Get the current post types where Simple address will be visible.
-	$simple_address_post_types = get_simple_address_post_types();
-
-	screen_icon();
-	?>
-	<h2><?php echo __( 'Simple address', 'simple-address' ); ?> <?php echo __( 'settings', 'simple-address' ); ?></h2>
-	<div class="wrap">
-		<form method="post" action="<?php echo $_SERVER['REQUEST_URI']; ?>">
-			<?php wp_nonce_field( 'update-options' ); ?>
-			<h3><?php echo __( "Select where to show Simple address meta box", 'simple-address' ); ?></h3>
-			<table class="form-table">
-				<tbody>
 				<?php
-				$post_types = get_post_types( array(
-					'show_ui' => true
-				), 'objects' );
+				echo wp_nonce_field( basename( __FILE__ ), 'simple_address_box_nonce' );
+				?>
+			</div>
+		</div>
+	<?php
+	}
 
-				foreach ( $post_types as $post_type ) {
-					$name = $post_type->name;
-					if ( $name === 'attachment' ) {
-						// No support for media/attachment
-						continue;
-					} ?>
-					<tr>
-						<th scope="row">
-							<?php echo $post_type->label; ?>
-						</th>
-						<td>
-							<p>
-								<?php $checked = ( in_array( $name, $simple_address_post_types ) ) ? ' checked="checked" ' : ''; ?>
-								<input type="checkbox" <?php echo $checked; ?> name="simple-address-post-types[]"
-								       value="<?php echo $name; ?>" id="simple-address-show-<?php echo $name; ?>"/>
-							</p>
-						</td>
-					</tr>
-				<?php } ?>
-				</tbody>
-			</table>
-			<input type="hidden" name="action" value="update"/>
-			<input type="hidden" name="simple_address_action" value="update"/>
+	/**
+	 * Save the simple address on the post if it exsists.
+	 *
+	 * @param $post_id
+	 *
+	 * @since 2.0.0
+	 */
 
-			<p class="submit">
-				<input type="submit" class="button-primary"
-				       value="<?php echo __( 'Save Changes', 'simple-address' ); ?>"/>
-			</p>
-		</form>
-	</div>
-<?php
+	public function save_post( $post_id ) {
+		// Check if our nonce is set.
+		if ( ! isset( $_POST['simple_address_box_nonce'] ) ) {
+			return $post_id;
+		}
+
+		// Verify that the nonce is valid.
+		if ( ! wp_verify_nonce( $_POST['simple_address_box_nonce'], basename( __FILE__ ) ) ) {
+			return $post_id;
+		}
+
+		// If this is an autosave, our form has not been submitted, so we don't want to do anything.
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return $post_id;
+		}
+
+		// Check the user's permissions.
+		if ( ! current_user_can( ( $_POST['post_type'] == 'page' ? 'edit_page' : 'edit_post' ), $post_id ) ) {
+			return $post_id;
+		}
+
+		$value      = $this->generate_simple_address( $_POST['simple_address_field'], $post_id );
+		$meta_value = $this->get_simple_address( $post_id );
+
+		wp_cache_delete( $this->cache_key );
+
+		if ( is_null( $meta_value ) ) {
+			// Add post meta key and value.
+			add_post_meta( $post_id, $this->meta_key, $value, true );
+		} else if ( ! is_null( $meta_value ) && ! is_null( $value ) ) {
+			// Update post meta key and value.
+			update_post_meta( $post_id, $this->meta_key, $value );
+		} else {
+			// Delete post meta row.
+			delete_post_meta( $post_id, $this->meta_key );
+		}
+	}
+
+	public function generate_simple_address( $value, $post_id = '' ) {
+
+		if ( empty( $post_id ) ) {
+			$post_id = $_REQUEST['post-id'];
+		}
+
+		$value        = sanitize_text_field( $value );
+		$posts        = $this->get_posts( $value );
+		$is_permalink = ! is_null( $this->find_post( $value ) );
+		$count        = count( $posts ) === 0 ? 1 : count( $posts );
+		$exists       = ! empty( $posts ) || $is_permalink;
+		$temp_value   = '';
+
+		// Don't update on the same post.
+		if ( count( $posts ) === 1 && $posts[0]->ID === intval( $post_id ) ) {
+			$exists = false || $is_permalink;
+		}
+
+		// Add "-X" where X is the final number to the value so it don't
+		// save the same value on posts.
+		while ( $exists ) {
+
+			$temp_value = $value . '-' . $count;
+
+			$posts = $this->get_posts( $temp_value );
+
+			if ( empty( $posts ) || is_null( $this->find_post( $temp_value ) ) ) {
+				$value = $temp_value;
+				break;
+			}
+
+			$count ++;
+		}
+	}
+
+	/**
+	 * Get Simple address by post id.
+	 *
+	 * @param $post_id
+	 *
+	 * @since 2.0.0
+	 *
+	 * @return mixed
+	 */
+
+	public function get_simple_address( $post_id ) {
+		return get_post_meta( $post_id, $this->meta_key, true );
+	}
 }
 
 /**
- * Simple address menu, add options page.
+ * Get Simple address instance.
+ *
+ * @since 2.0.0
+ *
+ * @return Simple_Address
  */
 
-function simple_address_menu() {
-	add_submenu_page( 'options-general.php', 'Simple address', 'Simple address', 'administrator', 'simple-address-options', 'simple_address_options' );
+function simple_address() {
+	return Simple_Address::instance();
 }
 
-add_action( 'admin_menu', 'simple_address_menu' );
+/**
+ * Get Simple address from a post.
+ *
+ * @param $post_id
+ *
+ * @since 2.0.0
+ *
+ * @return string|null
+ */
+
+function get_simple_address( $post_id ) {
+	$simple_address = simple_address();
+
+	return $simple_address->get_simple_address( $post_id );
+}
+
+$GLOBALS['simple_address'] = simple_address();

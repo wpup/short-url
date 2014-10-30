@@ -251,7 +251,7 @@ class Simple_Address {
 				$('body').on('click', '.simple-address-edit-button', function (e) {
 					e.preventDefault();
 					$(this).parent().hide();
-					$('.simple-address-edit').show();
+					$('.simple-address-edit-view').show();
 				});
 
 				/**

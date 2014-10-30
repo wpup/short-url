@@ -105,7 +105,7 @@ class Simple_Address {
 		if ( is_admin() ) {
 			add_action( 'admin_head', array( $this, 'admin_head' ) );
 			add_action( 'admin_footer', array( $this, 'admin_footer' ) );
-			add_action( 'post_submitbox_misc_actions', array( $this, 'post_submitbox_misc_actions' ) );
+			add_action( 'edit_form_after_title', array( $this, 'post_submitbox_misc_actions' ) );
 			add_action( 'save_post', array( $this, 'save_post' ) );
 			add_action( 'wp_ajax_generate_simple_address', array( $this, 'wp_ajax_generate_simple_address' ) );
 		}
@@ -214,9 +214,34 @@ class Simple_Address {
 	public function admin_head() {
 		?>
 		<style type="text/css">
-			.simple-address-show-view a:first-child {
+			#shortlink + a {
+				display: none;
+			}
+
+			.simple-address {
+				padding: 6px 0px 0px 10px;
+			}
+
+			.simple-address strong {
 				color: #666;
 			}
+
+			.simple-address-view {
+				line-height: 24px;
+				min-height: 25px;
+				margin-top: 5px;
+				padding: 0 10px;
+				color: #666;
+			}
+
+			.simple-address-view-edit input[type="text"] {
+				font-size: 13px;
+				height: 22px;
+				margin: 0px 0px 0px -3px;
+				width: 16em;
+			}
+
+			/* OLD CSS */
 
 			.simple-address-show-view a span {
 				background: #FFFBCC;
@@ -309,36 +334,46 @@ class Simple_Address {
 		$value    = $this->get_simple_address( $post->ID );
 		$home_url = get_home_url();
 		$home_url = ( $home_url[ strlen( $home_url ) - 1 ] == '/' ? $home_url : $home_url . '/' );
-		?>
-		<div class="misc-pub-section simple-address">
-			<label><strong><?php _e( 'Simple address', 'simple-address' ); ?></strong></label>
 
-			<p class="simple-address-error-view hide">
+		if ( empty( $post->post_title ) ) {
+			return;
+		}
+
+		?>
+		<div class="simple-address">
+
+			<strong><?php _e( 'Short url', 'simple-address' ); ?>:</strong>
+
+			<span class="simple-address-view">
+				<?php echo $home_url; ?>
+				<span class="simple-address-view-edit">
+					<input type="text" name="simple_address_field"
+					       value="<?php echo esc_attr( $value ); ?>"/></span>
+				<span class="simple-address-view-show"><?php echo $value; ?></span>
+				<a class="button button-small simple-address-view-button">Ok</a>
+			</span>
+
+			<!--
+
+			OLD CODE
+
+			<span class="simple-address-error-view hide">
 				<?php _e( 'No simple address exists', 'simple-address' ); ?>
 				<a class="button simple-address-edit-button">Edit</a>
-			</p>
+			</span>
 
-			<p class="simple-address-show-view <?php echo empty( $value ) ? 'hide' : ''; ?>">
+			<span class="simple-address-show-view <?php echo empty( $value ) ? 'hide' : ''; ?>">
 				<a href="<?php echo $home_url . $value; ?>">
-					<?php echo $home_url; ?><span><?php echo $value; ?></span></a>
-				<a class="button simple-address-edit-button">Edit</a>
-			</p>
-
-			<div class="simple-address-edit-view <?php echo empty( $value ) ? '' : 'hide'; ?>">
-				<p>
-					<input type="text" id="simple_address_field" name="simple_address_field"
-					       value="<?php echo esc_attr( $value ); ?>"/>
-
-					<a href="#" class="button simple-address-ok-button"><?php _e( 'OK' ); ?></a>
-
-				</p>
-
-				<p>
-					<i><?php echo __( 'This will not override any existing permalinks for posts, pages or custom post types.', 'simple_address' ); ?></i>
-				</p>
-			</div>
+					<?php echo $home_url; ?><span><input type="text" id="simple_address_field"
+					                                     name="simple_address_field"
+					                                     value="<?php echo esc_attr( $value ); ?>"/></span></a>
+				<a class="button button-small simple-address-edit-button">Edit</a>
+			</span>
 
 			<input type="hidden" id="simple-address-home-url" value="<?php echo $home_url; ?>"/>
+
+			-->
+
 			<?php wp_nonce_field( basename( __FILE__ ), 'simple_address_box_nonce' ); ?>
 		</div>
 	<?php

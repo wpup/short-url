@@ -1,43 +1,43 @@
 <?php
 
 /**
- * Plugin Name: Simple address
- * Description: Simple address to the permalink, like in EPiServer.
+ * Plugin Name: Short url
+ * Description: Short url to the permalink, like Simple Address in EPiServer.
  * Author: Fredrik Forsmo
  * Author URI: http://forsmo.me/
  * Version: 2.0.0
- * Plugin URI: https://github.com/frozzare/simple-address
+ * Plugin URI: https://github.com/frozzare/short-url
  */
-class Simple_Address {
+class Short_url {
 
 	/**
-	 * The instance of Simple address.
+	 * The instance of short url.
 	 *
-	 * @var Simple_Address|null
+	 * @var short_url|null
 	 */
 
 	private static $instance;
 
 	/**
-	 * The cache key that is used by Simple address.
+	 * The cache key that is used by short url.
 	 *
 	 * @var string
 	 * @since 2.0.0
 	 */
 
-	private $cache_key = '_simple_address_query';
+	private $cache_key = '_short_url_query';
 
 	/**
-	 * The post meta key that is used by Simple address.
+	 * The post meta key that is used by short url.
 	 *
 	 * @var string
 	 * @since 2.0.0
 	 */
 
-	private $meta_key = '_simple_address';
+	private $meta_key = '_short_url';
 
 	/**
-	 * Simple address version.
+	 * short url version.
 	 *
 	 * @var string
 	 * @since 2.0.0
@@ -64,9 +64,9 @@ class Simple_Address {
 	}
 
 	/**
-	 * Get all posts with the given Simple address.
+	 * Get all posts with the given short url.
 	 *
-	 * @param string $simple_address
+	 * @param string $short_url
 	 * @param bool $no_cache
 	 *
 	 * @since 2.0.0
@@ -75,13 +75,13 @@ class Simple_Address {
 	 * @return mixed
 	 */
 
-	private function get_posts( $simple_address, $no_cache = false ) {
+	private function get_posts( $short_url, $no_cache = false ) {
 		$posts = wp_cache_get( $this->cache_key );
 
 		if ( empty( $posts ) || $no_cache ) {
 			$args = array(
 				'meta_key'   => $this->meta_key,
-				'meta_value' => $simple_address
+				'meta_value' => $short_url
 			);
 
 			$query = new WP_Query( $args );
@@ -107,7 +107,7 @@ class Simple_Address {
 			add_action( 'admin_footer', array( $this, 'admin_footer' ) );
 			add_action( 'edit_form_after_title', array( $this, 'post_submitbox_misc_actions' ) );
 			add_action( 'save_post', array( $this, 'save_post' ) );
-			add_action( 'wp_ajax_generate_simple_address', array( $this, 'wp_ajax_generate_simple_address' ) );
+			add_action( 'wp_ajax_generate_short_url', array( $this, 'wp_ajax_generate_short_url' ) );
 		}
 	}
 
@@ -122,16 +122,16 @@ class Simple_Address {
 	}
 
 	/**
-	 * Get the instance of Simple address class.
+	 * Get the instance of short url class.
 	 *
 	 * @since 2.0.0
 	 *
-	 * @return Simple_Address
+	 * @return short_url
 	 */
 
 	public static function instance() {
 		if ( ! isset( self::$instance ) ) {
-			self::$instance = new Simple_Address();
+			self::$instance = new short_url();
 			self::$instance->setup_actions();
 		}
 
@@ -145,7 +145,7 @@ class Simple_Address {
 	 */
 
 	public function __clone() {
-		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'simple-address' ), '2.0.0' );
+		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'short-url' ), '2.0.0' );
 	}
 
 	/**
@@ -155,13 +155,13 @@ class Simple_Address {
 	 */
 
 	public function __wakeup() {
-		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'simple-address' ), '2.0.0' );
+		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'short-url' ), '2.0.0' );
 	}
 
 	/**
-	 * Simple address router.
+	 * short url router.
 	 * Will validation the request path and check so it don't equals `wp-admin`, `wp-content` or `wp`.
-	 * If any simple address exists in the database it will collect the post and try to redirect to the permalink if it not empty.
+	 * If any short url exists in the database it will collect the post and try to redirect to the permalink if it not empty.
 	 *
 	 * @param $query
 	 *
@@ -177,7 +177,7 @@ class Simple_Address {
 			return $query;
 		}
 
-		$paths_to_prevent = apply_filters( 'simple_address_prevent_paths', array( 'wp-admin', 'wp-content', 'wp' ) );
+		$paths_to_prevent = apply_filters( 'short_url_prevent_paths', array( 'wp-admin', 'wp-content', 'wp' ) );
 
 		// If the request don't match with the regex or match 'wp-admin' or 'wp-content' should we not proceeed with the redirect.
 		if ( ! preg_match( '/^[a-zA-Z0-9\-\_]+$/', $request ) && in_array( $request, $paths_to_prevent ) ) {
@@ -218,19 +218,19 @@ class Simple_Address {
 				display: none;
 			}
 
-			.simple-address {
+			.short-url {
 				padding: 6px 0px 0px 10px;
 			}
 
-			.simple-address .hide {
+			.short-url .hide {
 				display: none;
 			}
 
-			.simple-address strong {
+			.short-url strong {
 				color: #666;
 			}
 
-			.simple-address-view {
+			.short-url-view {
 				line-height: 24px;
 				min-height: 25px;
 				margin-top: 5px;
@@ -238,22 +238,18 @@ class Simple_Address {
 				color: #666;
 			}
 
-			.simple-address-view-edit input[type="text"] {
+			.short-url-view-edit input[type="text"] {
 				font-size: 13px;
 				height: 22px;
 				margin: 0px 0px 0px -3px;
 				width: 16em;
 			}
 
-			.simple-address-view-show {
-				margin-left: -3px;
-			}
-
-			.simple-address-view-show span {
+			.short-url-view-show span {
 				background: #FFFBCC;
 			}
 
-			.simple-address-button-cancel {
+			.short-url-button-cancel {
 				font-size: 11px;
 			}
 		</style>
@@ -275,24 +271,25 @@ class Simple_Address {
 				 *  Change view to edit view when a user hits edit button.
 				 */
 
-				$('body').on('click', '.simple-address-button-edit', function (e) {
+				$('body').on('click', '.short-url-button-edit', function (e) {
 					e.preventDefault();
 
-					$('.simple-address-view-show').hide();
-					$('.simple-address-view-edit').show().find('input').focus();
+					$('.short-url-view-show').hide();
+					$('.short-url-button-cancel').show();
+					$('.short-url-view-edit').show().find('input').focus();
 				});
 
 				/**
-				 * Update the Simple address when a user hits ok button.
+				 * Update the short url when a user hits ok button.
 				 */
 
-				$('body').on('click', '.simple-address-button-ok', function (e) {
+				$('body').on('click', '.short-url-button-ok', function (e) {
 					e.preventDefault();
 
-					var $showView = $('.simple-address-view-show'),
-					    $editView = $('.simple-address-view-edit'),
+					var $showView = $('.short-url-view-show'),
+					    $editView = $('.short-url-view-edit'),
 					    data = {
-						    action: 'generate_simple_address',
+						    action: 'generate_short_url',
 						    value: $editView.find('input').val(),
 						    post_id: $('#post_ID').val()
 					    };
@@ -305,6 +302,7 @@ class Simple_Address {
 						}
 
 						$showView.find('span').text(res.value);
+						$editView.find('input').val(res.value);
 
 						$editView.hide();
 						$showView.show();
@@ -316,11 +314,11 @@ class Simple_Address {
 				 * Cancel the edit view and show the show view.
 				 */
 
-				$('body').on('click', '.simple-address-button-cancel', function (e) {
+				$('body').on('click', '.short-url-button-cancel', function (e) {
 					e.preventDefault();
 
-					$('.simple-address-view-show').show();
-					$('.simple-address-view-edit').hide();
+					$('.short-url-view-show').show();
+					$('.short-url-view-edit').hide();
 				});
 
 			})(window.jQuery);
@@ -329,14 +327,14 @@ class Simple_Address {
 	}
 
 	/**
-	 * Render the Simple address input field in the post submitbox.
+	 * Render the short url input field in the post submitbox.
 	 *
 	 * @since 2.0.0
 	 */
 
 	public function post_submitbox_misc_actions() {
 		global $post;
-		$value       = $this->get_simple_address( $post->ID );
+		$value       = $this->get_short_url( $post->ID );
 		$home_url    = get_home_url();
 		$home_url    = ( $home_url[ strlen( $home_url ) - 1 ] == '/' ? $home_url : $home_url . '/' );
 		$empty_value = empty( $value );
@@ -346,29 +344,29 @@ class Simple_Address {
 		}
 
 		?>
-		<div class="simple-address">
+		<div class="short-url">
 
-			<strong><?php _e( 'Simple address', 'simple-address' ); ?>:</strong>
+			<strong><?php _e( 'Short url', 'short-url' ); ?>:</strong>
 
-			<span class="simple-address-view">
-				<?php echo $home_url; ?><span
-					class="simple-address-view-edit <?php echo $empty_value ? '' : 'hide'; ?>">
-					<input type="text" name="simple_address_field" value="<?php echo esc_attr( $value ); ?>"/>
-					<a class="button button-small simple-address-button-ok"><?php _e( 'OK' ); ?></a>
-					<a href="#" class="simple-address-button-cancel"><?php _e( 'Cancel' ); ?></a>
+			<span class="short-url-view"><?php echo $home_url; ?><span
+					class="short-url-view-show <?php echo $empty_value ? 'hide' : ''; ?>"><span><?php echo $value; ?></span>
+				<a class="button button-small short-url-button-edit"><?php _e( 'Edit' ); ?></a>
 				</span>
-				<span
-					class="simple-address-view-show <?php echo $empty_value ? 'hide' : ''; ?>"><span><?php echo $value; ?></span>
-				<a class="button button-small simple-address-button-edit <?php echo $empty_value ? 'hide' : ''; ?>"><?php _e( 'Edit' ); ?></a></span>
+				<span class="short-url-view-edit <?php echo $empty_value ? '' : 'hide'; ?>">
+					<input type="text" name="short_url_field" value="<?php echo esc_attr( $value ); ?>"/>
+					<a class="button button-small short-url-button-ok"><?php _e( 'OK' ); ?></a>
+					<a href="#"
+					   class="short-url-button-cancel <?php echo $empty_value ? 'hide' : ''; ?>"><?php _e( 'Cancel' ); ?></a>
+				</span>
 			</span>
 
-			<?php wp_nonce_field( basename( __FILE__ ), 'simple_address_box_nonce' ); ?>
+			<?php wp_nonce_field( basename( __FILE__ ), 'short_url_box_nonce' ); ?>
 		</div>
 	<?php
 	}
 
 	/**
-	 * Save the simple address on the post if it exsists.
+	 * Save the short url on the post if it exsists.
 	 *
 	 * @param $post_id
 	 *
@@ -377,12 +375,12 @@ class Simple_Address {
 
 	public function save_post( $post_id ) {
 		// Check if our nonce is set.
-		if ( ! isset( $_POST['simple_address_box_nonce'] ) ) {
+		if ( ! isset( $_POST['short_url_box_nonce'] ) ) {
 			return $post_id;
 		}
 
 		// Verify that the nonce is valid.
-		if ( ! wp_verify_nonce( $_POST['simple_address_box_nonce'], basename( __FILE__ ) ) ) {
+		if ( ! wp_verify_nonce( $_POST['short_url_box_nonce'], basename( __FILE__ ) ) ) {
 			return $post_id;
 		}
 
@@ -396,14 +394,14 @@ class Simple_Address {
 			return $post_id;
 		}
 
-		$value = $_POST['simple_address_field'];
+		$value = $_POST['short_url_field'];
 
 		if ( empty( $value ) ) {
 			return $post_id;
 		}
 
-		$value      = $this->generate_simple_address( $value, $post_id );
-		$meta_value = $this->get_simple_address( $post_id );
+		$value      = $this->generate_short_url( $value, $post_id );
+		$meta_value = $this->get_short_url( $post_id );
 
 		wp_cache_delete( $this->cache_key );
 
@@ -420,7 +418,7 @@ class Simple_Address {
 	}
 
 	/**
-	 * Generate simple address
+	 * Generate short url
 	 *
 	 * @param string $value
 	 * @param int $post_id
@@ -430,7 +428,7 @@ class Simple_Address {
 	 * @return string
 	 */
 
-	public function generate_simple_address( $value, $post_id ) {
+	public function generate_short_url( $value, $post_id ) {
 		$value        = sanitize_title( $value );
 		$posts        = $this->get_posts( $value );
 		$is_permalink = ! is_null( $this->find_post( $value ) );
@@ -462,12 +460,18 @@ class Simple_Address {
 		return $value;
 	}
 
-	public function wp_ajax_generate_simple_address() {
+	/**
+	 * Generate short url via wp ajax.
+	 *
+	 * @since 2.0.0
+	 */
+
+	public function wp_ajax_generate_short_url() {
 		$value   = isset( $_POST['value'] ) ? $_POST['value'] : '';
 		$post_id = isset( $_POST['post_id'] ) ? $_POST['post_id'] : 0;
 
 		if ( ! empty( $value ) ) {
-			$value = $this->generate_simple_address( $value, $post_id );
+			$value = $this->generate_short_url( $value, $post_id );
 		}
 
 		echo json_encode( array(
@@ -478,7 +482,7 @@ class Simple_Address {
 	}
 
 	/**
-	 * Get Simple address by post id.
+	 * Get short url by post id.
 	 *
 	 * @param $post_id
 	 *
@@ -487,25 +491,25 @@ class Simple_Address {
 	 * @return mixed
 	 */
 
-	public function get_simple_address( $post_id ) {
+	public function get_short_url( $post_id ) {
 		return get_post_meta( $post_id, $this->meta_key, true );
 	}
 }
 
 /**
- * Get Simple address instance.
+ * Get short url instance.
  *
  * @since 2.0.0
  *
- * @return Simple_Address
+ * @return short_url
  */
 
-function simple_address() {
-	return Simple_Address::instance();
+function short_url() {
+	return Short_url::instance();
 }
 
 /**
- * Get Simple address from a post.
+ * Get short url from a post.
  *
  * @param $post_id
  *
@@ -514,10 +518,10 @@ function simple_address() {
  * @return string|null
  */
 
-function get_simple_address( $post_id ) {
-	$simple_address = simple_address();
+function get_short_url( $post_id ) {
+	$short_url = short_url();
 
-	return $simple_address->get_simple_address( $post_id );
+	return $short_url->get_short_url( $post_id );
 }
 
-$GLOBALS['simple_address'] = simple_address();
+$GLOBALS['short_url'] = short_url();

@@ -334,7 +334,7 @@ class Short_url {
 
 	public function post_submitbox_misc_actions() {
 		global $post;
-		$value       = $this->get_short_url( $post->ID );
+		$value       = $this->get_short_url( $post->ID, true );
 		$home_url    = get_home_url();
 		$home_url    = ( $home_url[ strlen( $home_url ) - 1 ] == '/' ? $home_url : $home_url . '/' );
 		$empty_value = empty( $value );
@@ -401,7 +401,7 @@ class Short_url {
 		}
 
 		$value      = $this->generate_short_url( $value, $post_id );
-		$meta_value = $this->get_short_url( $post_id );
+		$meta_value = $this->get_short_url( $post_id, true );
 
 		wp_cache_delete( $this->cache_key );
 
@@ -484,15 +484,25 @@ class Short_url {
 	/**
 	 * Get short url by post id.
 	 *
-	 * @param $post_id
+	 * @param int $post_id
+	 * @param bool $only_short_url Default false
 	 *
 	 * @since 2.0.0
 	 *
 	 * @return mixed
 	 */
 
-	public function get_short_url( $post_id ) {
-		return get_post_meta( $post_id, $this->meta_key, true );
+	public function get_short_url( $post_id, $only_short_url = false ) {
+		$short_url = get_post_meta( $post_id, $this->meta_key, true );
+
+		if ( $only_short_url ) {
+			return $short_url;
+		}
+
+		$home_url = get_home_url();
+		$home_url = ( $home_url[ strlen( $home_url ) - 1 ] == '/' ? $home_url : $home_url . '/' );
+
+		return $home_url . $short_url;
 	}
 }
 
@@ -511,17 +521,18 @@ function short_url() {
 /**
  * Get short url from a post.
  *
- * @param $post_id
+ * @param int $post_id
+ * @param bool $only_short_url Default false
  *
  * @since 2.0.0
  *
  * @return string|null
  */
 
-function get_short_url( $post_id ) {
+function get_short_url( $post_id, $only_short_url ) {
 	$short_url = short_url();
 
-	return $short_url->get_short_url( $post_id );
+	return $short_url->get_short_url( $post_id, $only_short_url );
 }
 
 $GLOBALS['short_url'] = short_url();

@@ -350,13 +350,13 @@ class Short_url {
 
 			<span class="short-url-view"><?php echo $home_url; ?><span
 					class="short-url-view-show <?php echo $empty_value ? 'hide' : ''; ?>"><span><?php echo $value; ?></span>
-				<a class="button button-small short-url-button-edit"><?php _e( 'Edit' ); ?></a>
+				<a class="button button-small short-url-button-edit"><?php _e( 'Edit', 'short-url' ); ?></a>
 				</span>
 				<span class="short-url-view-edit <?php echo $empty_value ? '' : 'hide'; ?>">
 					<input type="text" name="short_url_field" value="<?php echo esc_attr( $value ); ?>"/>
-					<a class="button button-small short-url-button-ok"><?php _e( 'OK' ); ?></a>
+					<a class="button button-small short-url-button-ok"><?php _e( 'OK', 'short-url' ); ?></a>
 					<a href="#"
-					   class="short-url-button-cancel <?php echo $empty_value ? 'hide' : ''; ?>"><?php _e( 'Cancel' ); ?></a>
+					   class="short-url-button-cancel <?php echo $empty_value ? 'hide' : ''; ?>"><?php _e( 'Cancel', 'short-url' ); ?></a>
 				</span>
 			</span>
 

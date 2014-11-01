@@ -222,6 +222,10 @@ class Simple_Address {
 				padding: 6px 0px 0px 10px;
 			}
 
+			.simple-address .hide {
+				display: none;
+			}
+
 			.simple-address strong {
 				color: #666;
 			}
@@ -241,18 +245,16 @@ class Simple_Address {
 				width: 16em;
 			}
 
-			/* OLD CSS */
+			.simple-address-view-show {
+				margin-left: -3px;
+			}
 
-			.simple-address-show-view a span {
+			.simple-address-view-show span {
 				background: #FFFBCC;
 			}
 
-			.simple-address .hide {
-				display: none;
-			}
-
-			.simple-address-edit-view input[type="text"] {
-				width: 82%;
+			.simple-address-button-cancel {
+				font-size: 11px;
 			}
 		</style>
 	<?php
@@ -273,49 +275,52 @@ class Simple_Address {
 				 *  Change view to edit view when a user hits edit button.
 				 */
 
-				$('body').on('click', '.simple-address-edit-button', function (e) {
+				$('body').on('click', '.simple-address-button-edit', function (e) {
 					e.preventDefault();
-					$(this).parent().hide();
-					$('.simple-address-edit-view').show();
+
+					$('.simple-address-view-show').hide();
+					$('.simple-address-view-edit').show().find('input').focus();
 				});
 
 				/**
 				 * Update the Simple address when a user hits ok button.
 				 */
 
-				$('body').on('click', '.simple-address-ok-button', function (e) {
+				$('body').on('click', '.simple-address-button-ok', function (e) {
 					e.preventDefault();
-					var $input = $(this).prev(),
-					    $showView = $('.simple-address-show-view'),
-					    $errorView = $('.simple-address-error-view'),
+
+					var $showView = $('.simple-address-view-show'),
+					    $editView = $('.simple-address-view-edit'),
 					    data = {
 						    action: 'generate_simple_address',
-						    value: $input.val(),
+						    value: $editView.find('input').val(),
 						    post_id: $('#post_ID').val()
 					    };
 
 					$.post(window.ajaxurl, data, function (res) {
 						res = $.parseJSON(res);
 
-						if (typeof res !== 'object' || res.value === undefined) {
+						if (typeof res !== 'object' || res.value === undefined || !res.value.length) {
 							return;
 						}
 
-						$('.simple-address-edit-view').hide();
+						$showView.find('span').text(res.value);
 
-						if (res.value.length) {
-							var $link = $showView.find('a:first-child'),
-							    homeUrl = $('#simple-address-home-url').val();
-
-							$link.attr('href', homeUrl + res.value);
-							$link.find('span').text(res.value);
-
-							$input.val(res.value);
-							$showView.show();
-						} else {
-							$errorView.show();
-						}
+						$editView.hide();
+						$showView.show();
 					});
+
+				});
+
+				/**
+				 * Cancel the edit view and show the show view.
+				 */
+
+				$('body').on('click', '.simple-address-button-cancel', function (e) {
+					e.preventDefault();
+
+					$('.simple-address-view-show').show();
+					$('.simple-address-view-edit').hide();
 				});
 
 			})(window.jQuery);
@@ -331,9 +336,10 @@ class Simple_Address {
 
 	public function post_submitbox_misc_actions() {
 		global $post;
-		$value    = $this->get_simple_address( $post->ID );
-		$home_url = get_home_url();
-		$home_url = ( $home_url[ strlen( $home_url ) - 1 ] == '/' ? $home_url : $home_url . '/' );
+		$value       = $this->get_simple_address( $post->ID );
+		$home_url    = get_home_url();
+		$home_url    = ( $home_url[ strlen( $home_url ) - 1 ] == '/' ? $home_url : $home_url . '/' );
+		$empty_value = empty( $value );
 
 		if ( empty( $post->post_title ) ) {
 			return;
@@ -342,37 +348,19 @@ class Simple_Address {
 		?>
 		<div class="simple-address">
 
-			<strong><?php _e( 'Short url', 'simple-address' ); ?>:</strong>
+			<strong><?php _e( 'Simple address', 'simple-address' ); ?>:</strong>
 
 			<span class="simple-address-view">
-				<?php echo $home_url; ?>
-				<span class="simple-address-view-edit">
-					<input type="text" name="simple_address_field"
-					       value="<?php echo esc_attr( $value ); ?>"/></span>
-				<span class="simple-address-view-show"><?php echo $value; ?></span>
-				<a class="button button-small simple-address-view-button">Ok</a>
+				<?php echo $home_url; ?><span
+					class="simple-address-view-edit <?php echo $empty_value ? '' : 'hide'; ?>">
+					<input type="text" name="simple_address_field" value="<?php echo esc_attr( $value ); ?>"/>
+					<a class="button button-small simple-address-button-ok"><?php _e( 'OK' ); ?></a>
+					<a href="#" class="simple-address-button-cancel"><?php _e( 'Cancel' ); ?></a>
+				</span>
+				<span
+					class="simple-address-view-show <?php echo $empty_value ? 'hide' : ''; ?>"><span><?php echo $value; ?></span>
+				<a class="button button-small simple-address-button-edit <?php echo $empty_value ? 'hide' : ''; ?>"><?php _e( 'Edit' ); ?></a></span>
 			</span>
-
-			<!--
-
-			OLD CODE
-
-			<span class="simple-address-error-view hide">
-				<?php _e( 'No simple address exists', 'simple-address' ); ?>
-				<a class="button simple-address-edit-button">Edit</a>
-			</span>
-
-			<span class="simple-address-show-view <?php echo empty( $value ) ? 'hide' : ''; ?>">
-				<a href="<?php echo $home_url . $value; ?>">
-					<?php echo $home_url; ?><span><input type="text" id="simple_address_field"
-					                                     name="simple_address_field"
-					                                     value="<?php echo esc_attr( $value ); ?>"/></span></a>
-				<a class="button button-small simple-address-edit-button">Edit</a>
-			</span>
-
-			<input type="hidden" id="simple-address-home-url" value="<?php echo $home_url; ?>"/>
-
-			-->
 
 			<?php wp_nonce_field( basename( __FILE__ ), 'simple_address_box_nonce' ); ?>
 		</div>

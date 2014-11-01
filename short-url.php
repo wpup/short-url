@@ -94,6 +94,18 @@ class Short_url {
 	}
 
 	/**
+	 * Load the right language files.
+	 *
+	 * @since 2.0.0
+	 */
+
+	private function load_language() {
+		$domain = 'short-url';
+		$path   = dirname( __FILE__ ) . '/languages/' . $domain . '-' . get_locale() . '.mo';
+		load_textdomain( $domain, $path );
+	}
+
+	/**
 	 * Setup actions.
 	 *
 	 * @since 2.0.0
@@ -133,6 +145,7 @@ class Short_url {
 		if ( ! isset( self::$instance ) ) {
 			self::$instance = new Short_url();
 			self::$instance->setup_actions();
+			self::$instance->load_language();
 		}
 
 		return self::$instance;

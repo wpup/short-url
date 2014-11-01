@@ -131,7 +131,7 @@ class Short_url {
 
 	public static function instance() {
 		if ( ! isset( self::$instance ) ) {
-			self::$instance = new short_url();
+			self::$instance = new Short_url();
 			self::$instance->setup_actions();
 		}
 

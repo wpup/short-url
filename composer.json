@@ -1,7 +1,7 @@
 {
   "name": "frozzare/simple-address",
   "type": "wordpress-plugin",
-  "licence": "MIT",
+  "license": "MIT",
   "description": "Simple address meta box for WordPress. Like in EPiServer.",
   "homepage": "https://github.com/frozzare/simple-address",
   "authors": [

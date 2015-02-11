@@ -1,0 +1,27 @@
+{
+  "name": "frozzare/simple-address",
+  "type": "wordpress-plugin",
+  "licence": "MIT",
+  "description": "Simple address meta box for WordPress. Like in EPiServer.",
+  "homepage": "https://github.com/frozzare/simple-address",
+  "authors": [
+    {
+      "name": "Fredrik Forsmo",
+      "email": "fredrik.forsmo@gmail.com",
+      "homepage": "https://github.com/frozzare"
+    }
+  ],
+  "keywords": [
+    "wordpress",
+    "plugin",
+    "address",
+    "permalink"
+  ],
+  "support": {
+    "issues": "https://github.com/frozzare/simple-address/issues"
+  },
+  "require": {
+    "php": ">=5.3.0",
+    "composer/installers": "~1.0"
+  }
+}

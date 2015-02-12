@@ -8,12 +8,13 @@
  * Version: 2.0.0
  * Plugin URI: https://github.com/frozzare/short-url
  */
-class Short_url {
+
+final class Short_url {
 
 	/**
-	 * The instance of short url.
+	 * The instance of Short url.
 	 *
-	 * @var short_url|null
+	 * @var object
 	 */
 
 	private static $instance;
@@ -37,26 +38,19 @@ class Short_url {
 	private $meta_key = '_short_url';
 
 	/**
-	 * short url version.
-	 *
-	 * @var string
-	 * @since 2.0.0
-	 */
-
-	private $version = '2.0.0';
-
-	/**
 	 * Find post by post name.
 	 *
 	 * @param $post_name
 	 *
 	 * @since 2.0.0
+	 * @access private
 	 *
 	 * @return mixed
 	 */
 
 	private function find_post( $post_name ) {
 		global $wpdb;
+
 		$query   = $wpdb->prepare( "SELECT * FROM wp_posts WHERE post_name = %s", $post_name );
 		$results = $wpdb->get_results( $query );
 
@@ -80,8 +74,17 @@ class Short_url {
 
 		if ( empty( $posts ) || $no_cache ) {
 			$args = array(
-				'meta_key'   => $this->meta_key,
-				'meta_value' => $short_url
+				'post_type' => 'any',
+				'no_found_rows' => true,
+				'update_post_meta_cache' => false,
+				'update_post_term_cache' => false,
+				'meta_query' => array(
+					array(
+						'key' => $this->meta_key,
+						'value' => $short_url,
+						'compare' => '='
+					)
+				)
 			);
 
 			$query = new WP_Query( $args );
@@ -117,7 +120,7 @@ class Short_url {
 		if ( is_admin() ) {
 			add_action( 'admin_head', array( $this, 'admin_head' ) );
 			add_action( 'admin_footer', array( $this, 'admin_footer' ) );
-			add_action( 'edit_form_after_title', array( $this, 'post_submitbox_misc_actions' ) );
+			add_action( 'post_submitbox_misc_actions', array( $this, 'post_submitbox_misc_actions' ) );
 			add_action( 'save_post', array( $this, 'save_post' ) );
 			add_action( 'wp_ajax_generate_short_url', array( $this, 'wp_ajax_generate_short_url' ) );
 		}
@@ -227,43 +230,20 @@ class Short_url {
 	public function admin_head() {
 		?>
 		<style type="text/css">
-			#shortlink + a {
-				display: none;
+			.short-url-show-view a:first-child {
+				color: #666;
 			}
 
-			.short-url {
-				padding: 6px 0px 0px 10px;
+			.short-url-show-view a span {
+				background: #FFFBCC;
 			}
 
 			.short-url .hide {
 				display: none;
 			}
 
-			.short-url strong {
-				color: #666;
-			}
-
-			.short-url-view {
-				line-height: 24px;
-				min-height: 25px;
-				margin-top: 5px;
-				padding: 0 10px;
-				color: #666;
-			}
-
-			.short-url-view-edit input[type="text"] {
-				font-size: 13px;
-				height: 22px;
-				margin: 0px 0px 0px -3px;
-				width: 16em;
-			}
-
-			.short-url-view-show span {
-				background: #FFFBCC;
-			}
-
-			.short-url-button-cancel {
-				font-size: 11px;
+			.short-url-edit-view input[type="text"] {
+				width: 82%;
 			}
 		</style>
 	<?php
@@ -286,10 +266,8 @@ class Short_url {
 
 				$('body').on('click', '.short-url-button-edit', function (e) {
 					e.preventDefault();
-
-					$('.short-url-view-show').hide();
-					$('.short-url-button-cancel').show();
-					$('.short-url-view-edit').show().find('input').focus();
+					$(this).parent().hide();
+					$('.short-url-edit-view').show();
 				});
 
 				/**
@@ -299,9 +277,10 @@ class Short_url {
 				$('body').on('click', '.short-url-button-ok', function (e) {
 					e.preventDefault();
 
-					var $showView = $('.short-url-view-show'),
-					    $editView = $('.short-url-view-edit'),
-					    data = {
+					var $input = $(this).prev();
+					var $showView = $('.short-url-show-view');
+					var $editView = $('.short-url-edit-view');
+					var data = {
 						    action: 'generate_short_url',
 						    value: $editView.find('input').val(),
 						    post_id: $('#post_ID').val()
@@ -314,11 +293,20 @@ class Short_url {
 							return;
 						}
 
-						$showView.find('span').text(res.value);
-						$editView.find('input').val(res.value);
+						$('.short-url-edit-view').hide();
 
-						$editView.hide();
-						$showView.show();
+						if (res.value.length) {
+							var $link = $showView.find('a:first-child');
+							var homeUrl = $('#short-url-home-url').val();
+
+							$link.attr('href', homeUrl + res.value);
+							$link.find('span').text(res.value);
+							$input.val(res.value);
+
+							$showView.show();
+						} else {
+							$errorView.show();
+						}
 					});
 
 				});
@@ -357,22 +345,39 @@ class Short_url {
 		}
 
 		?>
-		<div class="short-url">
 
-			<strong><?php _e( 'Short url', 'short-url' ); ?>:</strong>
+		<div class="misc-pub-section short-url">
 
-			<span class="short-url-view"><?php echo $home_url; ?><span
-					class="short-url-view-show <?php echo $empty_value ? 'hide' : ''; ?>"><span><?php echo $value; ?></span>
-				<a class="button button-small short-url-button-edit"><?php _e( 'Edit', 'short-url' ); ?></a>
-				</span>
-				<span class="short-url-view-edit <?php echo $empty_value ? '' : 'hide'; ?>">
-					<input type="text" name="short_url_field" value="<?php echo esc_attr( $value ); ?>"/>
-					<a class="button button-small short-url-button-ok"><?php _e( 'OK', 'short-url' ); ?></a>
-					<a href="#"
-					   class="short-url-button-cancel <?php echo $empty_value ? 'hide' : ''; ?>"><?php _e( 'Cancel', 'short-url' ); ?></a>
-				</span>
-			</span>
+			<label>
+				<strong><?php _e( 'Short url', 'short-url' ); ?>:</strong>
+			</label>
 
+			<p class="short-url-error-view hide">
+				<?php _e( 'No short url exists', 'short-url' ); ?>
+				<a class="button short-url-edit-button">Edit</a>
+			</p>
+
+			<p class="short-url-show-view <?php echo empty( $value ) ? 'hide' : ''; ?>">
+				<a href="<?php echo $home_url . $value; ?>">
+					<?php echo $home_url; ?><span><?php echo $value; ?></span></a>
+				<a class="button short-url-button-edit">Edit</a>
+			</p>
+
+			<div class="short-url-edit-view <?php echo empty( $value ) ? '' : 'hide'; ?>">
+				<p>
+					<input type="text" id="short_url_field" name="short_url_field"
+					       value="<?php echo esc_attr( $value ); ?>"/>
+
+					<a href="#" class="button short-url-button-ok"><?php _e( 'OK' ); ?></a>
+
+				</p>
+
+				<p>
+					<i><?php echo __( 'This will not override any existing permalinks for posts, pages or custom post types.', 'simple_address' ); ?></i>
+				</p>
+			</div>
+
+			<input type="hidden" id="short-url-home-url" value="<?php echo $home_url; ?>"/>
 			<?php wp_nonce_field( basename( __FILE__ ), 'short_url_box_nonce' ); ?>
 		</div>
 	<?php
@@ -419,13 +424,10 @@ class Short_url {
 		wp_cache_delete( $this->cache_key );
 
 		if ( is_null( $meta_value ) ) {
-			// Add post meta key and value.
 			add_post_meta( $post_id, $this->meta_key, $value, true );
 		} else if ( ! is_null( $meta_value ) && ! is_null( $value ) ) {
-			// Update post meta key and value.
 			update_post_meta( $post_id, $this->meta_key, $value );
 		} else {
-			// Delete post meta row.
 			delete_post_meta( $post_id, $this->meta_key );
 		}
 	}
@@ -548,4 +550,4 @@ function get_short_url( $post_id, $only_short_url ) {
 	return $short_url->get_short_url( $post_id, $only_short_url );
 }
 
-$GLOBALS['short_url'] = short_url();
+add_action('plugins_loaded', 'short_url');

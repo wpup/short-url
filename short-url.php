@@ -216,8 +216,7 @@ final class Short_url {
 		}
 
 		// Let's redirect baby!
-		header( 'HTTP/1.1 301 Moved Permanently' );
-		header( 'Location: ' . $url );
+		wp_safe_redirect( $url );
 		exit;
 	}
 

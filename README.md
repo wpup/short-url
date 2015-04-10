@@ -1,7 +1,7 @@
-Simple address
+Short url
 ==============
 
-Simple address meta box for WordPress. Like in EPiServer.
+Create a short url that redirects to the long url. Like Simple Address in EPiServer.
 
 ![](screenshot.png)
 

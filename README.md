@@ -7,7 +7,7 @@ Create a short url that redirects to the long url. Like Simple Address in EPiSer
 
 # Install
 
-Install using composer:
+With composer:
 
 ```
 composer require frozzare/short-url

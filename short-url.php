@@ -73,14 +73,15 @@ final class Short_url {
 		$posts = wp_cache_get( $this->cache_key );
 
 		if ( empty( $posts ) || $no_cache ) {
-			$args = array(
+			$meta_key = $this->meta_key;
+			$args     = array(
 				'post_type' => 'any',
 				'no_found_rows' => true,
 				'update_post_meta_cache' => false,
 				'update_post_term_cache' => false,
 				'meta_query' => array(
 					array(
-						'key' => $this->meta_key,
+						'key' => $meta_key,
 						'value' => $short_url,
 						'compare' => '='
 					)
@@ -89,6 +90,10 @@ final class Short_url {
 
 			$query = new WP_Query( $args );
 			$posts = $query->get_posts();
+
+			$posts = array_filter( $posts, function ( $post ) use ( $meta_key, $short_url ) {
+				return get_post_meta( $post->ID, $meta_key, true ) === $short_url;
+			} );
 
 			wp_cache_set( $this->cache_key, $posts );
 		}
@@ -549,4 +554,4 @@ function get_short_url( $post_id, $only_short_url ) {
 	return $short_url->get_short_url( $post_id, $only_short_url );
 }
 
-add_action('plugins_loaded', 'short_url');
+add_action( 'plugins_loaded', 'short_url' );

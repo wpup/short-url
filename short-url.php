@@ -62,7 +62,7 @@ final class Short_url {
 	 * @since 2.0.0
 	 * @access private
 	 *
-	 * @return mixed
+	 * @return array
 	 */
 	private function get_posts( $short_url, $no_cache = false ) {
 		$posts = wp_cache_get( $this->cache_key );
@@ -437,7 +437,14 @@ final class Short_url {
 	 * @return string
 	 */
 	public function generate_short_url( $value, $post_id ) {
-		$value        = sanitize_title( $value );
+		$value = sanitize_title( $value );
+
+		// If `url_to_postid` returns zero we can be sure that a url with the
+		// value don't exists and just return the value.
+		if ( url_to_postid( home_url( $value ) ) === 0 ) {
+			return $value;
+		}
+
 		$posts        = $this->get_posts( $value );
 		$is_permalink = ! is_null( $this->find_post( $value ) );
 		$count        = count( $posts ) === 0 ? 1 : count( $posts );

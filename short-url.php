@@ -70,14 +70,14 @@ final class Short_url {
 		if ( empty( $posts ) || $no_cache ) {
 			$meta_key = $this->meta_key;
 			$args     = array(
-				'post_type' => 'any',
-				'no_found_rows' => true,
+				'post_type'              => 'any',
+				'no_found_rows'          => true,
 				'update_post_meta_cache' => false,
 				'update_post_term_cache' => false,
-				'meta_query' => array(
+				'meta_query'             => array(
 					array(
-						'key' => $meta_key,
-						'value' => $short_url,
+						'key'     => $meta_key,
+						'value'   => $short_url,
 						'compare' => '='
 					)
 				)

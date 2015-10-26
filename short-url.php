@@ -186,7 +186,13 @@ final class Short_url {
 			return $query;
 		}
 
-		$paths_to_prevent = apply_filters( 'short_url_prevent_paths', array( 'wp-admin', 'wp-content', 'wp' ) );
+		$subdirectories = array( 'wp-admin', 'wp-content', 'wp', 'wordpress' );
+
+		if ( function_exists( 'get_subdirectory_reserved_names' ) ) {
+			$subdirectories = array_merge( $subdirectories, get_subdirectory_reserved_names() );
+		}
+
+		$paths_to_prevent = apply_filters( 'short_url_prevent_paths', $subdirectories );
 
 		// If the request don't match with the regex or match 'wp-admin' or 'wp-content' should we not proceeed with the redirect.
 		if ( ! preg_match( '/^[a-zA-Z0-9\-\_]+$/', $request ) && in_array( $request, $paths_to_prevent ) ) {

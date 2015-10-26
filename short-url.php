@@ -16,7 +16,6 @@ final class Short_url {
 	 *
 	 * @var object
 	 */
-
 	private static $instance;
 
 	/**
@@ -25,7 +24,6 @@ final class Short_url {
 	 * @var string
 	 * @since 2.0.0
 	 */
-
 	private $cache_key = '_short_url_query';
 
 	/**
@@ -34,7 +32,6 @@ final class Short_url {
 	 * @var string
 	 * @since 2.0.0
 	 */
-
 	private $meta_key = '_short_url';
 
 	/**
@@ -47,7 +44,6 @@ final class Short_url {
 	 *
 	 * @return mixed
 	 */
-
 	private function find_post( $post_name ) {
 		global $wpdb;
 
@@ -68,7 +64,6 @@ final class Short_url {
 	 *
 	 * @return mixed
 	 */
-
 	private function get_posts( $short_url, $no_cache = false ) {
 		$posts = wp_cache_get( $this->cache_key );
 
@@ -106,7 +101,6 @@ final class Short_url {
 	 *
 	 * @since 2.0.0
 	 */
-
 	private function load_language() {
 		$domain = 'short-url';
 		$path   = dirname( __FILE__ ) . '/languages/' . $domain . '-' . get_locale() . '.mo';
@@ -118,7 +112,6 @@ final class Short_url {
 	 *
 	 * @since 2.0.0
 	 */
-
 	private function setup_actions() {
 		add_action( 'send_headers', array( $this, 'router' ), 10, 2 );
 
@@ -136,7 +129,6 @@ final class Short_url {
 	 *
 	 * @since 2.0.0
 	 */
-
 	public function __construct() {
 		// Empty, don't do anything here.
 	}
@@ -148,7 +140,6 @@ final class Short_url {
 	 *
 	 * @return short_url
 	 */
-
 	public static function instance() {
 		if ( ! isset( self::$instance ) ) {
 			self::$instance = new Short_url();
@@ -164,7 +155,6 @@ final class Short_url {
 	 *
 	 * @since 2.0.0
 	 */
-
 	public function __clone() {
 		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'short-url' ), '2.0.0' );
 	}
@@ -174,7 +164,6 @@ final class Short_url {
 	 *
 	 * @since 2.0.0
 	 */
-
 	public function __wakeup() {
 		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'short-url' ), '2.0.0' );
 	}
@@ -188,7 +177,6 @@ final class Short_url {
 	 *
 	 * @since 2.0.0
 	 */
-
 	public function router( $query ) {
 		$request = $query->request;
 		$req_uri = $_SERVER['REQUEST_URI'];
@@ -230,7 +218,6 @@ final class Short_url {
 	 *
 	 * @since 2.0.0
 	 */
-
 	public function admin_head() {
 		?>
 		<style type="text/css">
@@ -258,7 +245,6 @@ final class Short_url {
 	 *
 	 * @since 2.0.0
 	 */
-
 	public function admin_footer() {
 		?>
 		<script type="text/javascript">
@@ -336,7 +322,6 @@ final class Short_url {
 	 *
 	 * @since 2.0.0
 	 */
-
 	public function post_submitbox_misc_actions() {
 		global $post;
 		$value       = $this->get_short_url( $post->ID, true );
@@ -394,7 +379,6 @@ final class Short_url {
 	 *
 	 * @since 2.0.0
 	 */
-
 	public function save_post( $post_id ) {
 		// Check if our nonce is set.
 		if ( ! isset( $_POST['short_url_box_nonce'] ) ) {
@@ -446,7 +430,6 @@ final class Short_url {
 	 *
 	 * @return string
 	 */
-
 	public function generate_short_url( $value, $post_id ) {
 		$value        = sanitize_title( $value );
 		$posts        = $this->get_posts( $value );
@@ -484,7 +467,6 @@ final class Short_url {
 	 *
 	 * @since 2.0.0
 	 */
-
 	public function wp_ajax_generate_short_url() {
 		$value   = isset( $_POST['value'] ) ? $_POST['value'] : '';
 		$post_id = isset( $_POST['post_id'] ) ? $_POST['post_id'] : 0;
@@ -510,7 +492,6 @@ final class Short_url {
 	 *
 	 * @return mixed
 	 */
-
 	public function get_short_url( $post_id, $only_short_url = false ) {
 		$short_url = get_post_meta( $post_id, $this->meta_key, true );
 
@@ -532,7 +513,6 @@ final class Short_url {
  *
  * @return short_url
  */
-
 function short_url() {
 	return Short_url::instance();
 }

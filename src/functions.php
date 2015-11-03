@@ -10,9 +10,6 @@
  *
  * @return string|null
  */
-
 function get_short_url( $post_id, $only_short_url ) {
-	$short_url = short_url();
-
-	return $short_url->get_short_url( $post_id, $only_short_url );
+	return short_url()->get_short_url( $post_id, $only_short_url );
 }

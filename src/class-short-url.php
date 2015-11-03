@@ -60,19 +60,19 @@ final class Short_Url {
 
 		if ( empty( $posts ) || $no_cache ) {
 			$meta_key = $this->meta_key;
-			$args     = array(
+			$args     = [
 				'post_type'              => 'any',
 				'no_found_rows'          => true,
 				'update_post_meta_cache' => false,
 				'update_post_term_cache' => false,
-				'meta_query'             => array(
-					array(
+				'meta_query'             => [
+					[
 						'key'     => $meta_key,
 						'value'   => $short_url,
 						'compare' => '='
-					)
-				)
-			);
+					]
+				]
+			];
 
 			$query = new WP_Query( $args );
 			$posts = $query->get_posts();
@@ -104,14 +104,14 @@ final class Short_Url {
 	 * @since 2.0.0
 	 */
 	private function setup_actions() {
-		add_action( 'send_headers', array( $this, 'router' ), 10, 2 );
+		add_action( 'send_headers', [$this, 'router'], 10, 2 );
 
 		if ( is_admin() ) {
-			add_action( 'admin_head', array( $this, 'admin_head' ) );
-			add_action( 'admin_footer', array( $this, 'admin_footer' ) );
-			add_action( 'post_submitbox_misc_actions', array( $this, 'post_submitbox_misc_actions' ) );
-			add_action( 'save_post', array( $this, 'save_post' ) );
-			add_action( 'wp_ajax_generate_short_url', array( $this, 'wp_ajax_generate_short_url' ) );
+			add_action( 'admin_head', [$this, 'admin_head'] );
+			add_action( 'admin_footer', [$this, 'admin_footer'] );
+			add_action( 'post_submitbox_misc_actions', [$this, 'post_submitbox_misc_actions'] );
+			add_action( 'save_post', [$this, 'save_post'] );
+			add_action( 'wp_ajax_generate_short_url', [$this, 'wp_ajax_generate_short_url'] );
 		}
 	}
 
@@ -177,7 +177,7 @@ final class Short_Url {
 			return $query;
 		}
 
-		$subdirectories = array( 'wp-admin', 'wp-content', 'wp', 'wordpress' );
+		$subdirectories = ['wp-admin', 'wp-content', 'wp', 'wordpress'];
 
 		if ( function_exists( 'get_subdirectory_reserved_names' ) ) {
 			$subdirectories = array_merge( $subdirectories, get_subdirectory_reserved_names() );
@@ -476,9 +476,9 @@ final class Short_Url {
 			$value = $this->generate_short_url( $value, $post_id );
 		}
 
-		echo json_encode( array(
+		echo json_encode( [
 			'value' => $value
-		) );
+		] );
 
 		exit;
 	}

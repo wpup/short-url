@@ -222,6 +222,10 @@ final class Short_Url {
 				color: #666;
 			}
 
+			.short-url-show-view p {
+				word-break: break-all;
+			}
+
 			.short-url-show-view a span {
 				background: #FFFBCC;
 			}

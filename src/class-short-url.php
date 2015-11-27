@@ -170,7 +170,7 @@ final class Short_Url {
 	 */
 	public function router( $query ) {
 		$request = $query->request;
-		$req_uri = $_SERVER['REQUEST_URI'];
+		$req_uri = strtolower( $_SERVER['REQUEST_URI'] );
 
 		// If the request uri ends with a slash it should
 		if ( $req_uri[ strlen( $req_uri ) - 1 ] === '/' ) {

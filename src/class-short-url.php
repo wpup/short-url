@@ -56,7 +56,7 @@ final class Short_Url {
 	 * @return array
 	 */
 	private function get_posts( $short_url, $no_cache = false ) {
-		$posts = wp_cache_get( $this->cache_key );
+		$posts = wp_cache_get( sprintf( '%s:%s', $this->cache_key, $short_url ) );
 
 		if ( empty( $posts ) || $no_cache ) {
 			$meta_key = $this->meta_key;
@@ -81,7 +81,7 @@ final class Short_Url {
 				return get_post_meta( $post->ID, $meta_key, true ) === $short_url;
 			} );
 
-			wp_cache_set( $this->cache_key, $posts );
+			wp_cache_set( sprintf( '%s:%s', $this->cache_key, $short_url ), $posts );
 		}
 
 		return $posts;
@@ -407,7 +407,11 @@ final class Short_Url {
 		$value      = $this->generate_short_url( $value, $post_id );
 		$meta_value = $this->get_short_url( $post_id, true );
 
-		wp_cache_delete( $this->cache_key );
+		// Delete old cache if any.
+		wp_cache_delete( sprintf( '%s:%s', $this->cache_key, $meta_value ) );
+
+		// Delete new cache if any.
+		wp_cache_delete( sprintf( '%s:%s', $this->cache_key, $value ) );
 
 		if ( is_null( $meta_value ) ) {
 			add_post_meta( $post_id, $this->meta_key, $value, true );

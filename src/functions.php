@@ -8,6 +8,6 @@
  *
  * @return string|null
  */
-function get_short_url( $post_id, $only_short_url ) {
+function get_short_url( $post_id, $only_short_url = false ) {
 	return short_url()->get_short_url( $post_id, $only_short_url );
 }

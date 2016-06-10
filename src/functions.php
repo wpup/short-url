@@ -6,8 +6,6 @@
  * @param int $post_id
  * @param bool $only_short_url Default false
  *
- * @since 2.0.0
- *
  * @return string|null
  */
 function get_short_url( $post_id, $only_short_url ) {

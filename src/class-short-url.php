@@ -222,7 +222,7 @@ final class Short_Url {
 				color: #666;
 			}
 
-			.short-url-show-view p {
+			.short-url-show-view {
 				word-break: break-all;
 			}
 

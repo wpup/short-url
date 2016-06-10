@@ -5,7 +5,7 @@
  * Description: Short url to the permalink, like Simple Address in EPiServer.
  * Author: Fredrik Forsmo
  * Author URI: https://frozzare.com/
- * Version: 2.0.3
+ * Version: 2.0.4
  * Plugin URI: https://github.com/frozzare/short-url
  */
 

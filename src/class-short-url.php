@@ -13,7 +13,6 @@ final class Short_Url {
 	 * The cache key that is used by short url.
 	 *
 	 * @var string
-	 * @since 2.0.0
 	 */
 	private $cache_key = '_short_url_query';
 
@@ -21,7 +20,6 @@ final class Short_Url {
 	 * The post meta key that is used by short url.
 	 *
 	 * @var string
-	 * @since 2.0.0
 	 */
 	private $meta_key = '_short_url';
 
@@ -29,9 +27,6 @@ final class Short_Url {
 	 * Find post by post name.
 	 *
 	 * @param $post_name
-	 *
-	 * @since 2.0.0
-	 * @access private
 	 *
 	 * @return mixed
 	 */
@@ -49,9 +44,6 @@ final class Short_Url {
 	 *
 	 * @param string $short_url
 	 * @param bool $no_cache
-	 *
-	 * @since 2.0.0
-	 * @access private
 	 *
 	 * @return array
 	 */
@@ -89,8 +81,6 @@ final class Short_Url {
 
 	/**
 	 * Load the right language files.
-	 *
-	 * @since 2.0.0
 	 */
 	private function load_language() {
 		$domain = 'short-url';
@@ -100,8 +90,6 @@ final class Short_Url {
 
 	/**
 	 * Setup actions.
-	 *
-	 * @since 2.0.0
 	 */
 	private function setup_actions() {
 		add_action( 'send_headers', [$this, 'router'], 10, 2 );
@@ -117,8 +105,6 @@ final class Short_Url {
 
 	/**
 	 * Empty constructor.
-	 *
-	 * @since 2.0.0
 	 */
 	private function __construct() {
 		// Empty, don't do anything here.
@@ -127,9 +113,7 @@ final class Short_Url {
 	/**
 	 * Get the instance of short url class.
 	 *
-	 * @since 2.0.0
-	 *
-	 * @return short_url
+	 * @return Short_Url
 	 */
 	public static function instance() {
 		if ( ! isset( self::$instance ) ) {
@@ -143,8 +127,6 @@ final class Short_Url {
 
 	/**
 	 * Cloning is forbidden.
-	 *
-	 * @since 2.0.0
 	 */
 	public function __clone() {
 		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'short-url' ), '2.0.0' );
@@ -152,8 +134,6 @@ final class Short_Url {
 
 	/**
 	 * Unserializing instances of this class is forbidden.
-	 *
-	 * @since 2.0.0
 	 */
 	public function __wakeup() {
 		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'short-url' ), '2.0.0' );
@@ -164,9 +144,7 @@ final class Short_Url {
 	 * Will validation the request path and check so it don't equals `wp-admin`, `wp-content` or `wp`.
 	 * If any short url exists in the database it will collect the post and try to redirect to the permalink if it not empty.
 	 *
-	 * @param $query
-	 *
-	 * @since 2.0.0
+	 * @param object $query
 	 */
 	public function router( $query ) {
 		$request = strtolower( $query->request );
@@ -212,8 +190,6 @@ final class Short_Url {
 
 	/**
 	 * Output css in admin head.
-	 *
-	 * @since 2.0.0
 	 */
 	public function admin_head() {
 		?>
@@ -243,8 +219,6 @@ final class Short_Url {
 
 	/**
 	 * Output JavaScript in admin footer.
-	 *
-	 * @since 2.0.0
 	 */
 	public function admin_footer() {
 		?>
@@ -317,8 +291,6 @@ final class Short_Url {
 
 	/**
 	 * Render the short url input field in the post submitbox.
-	 *
-	 * @since 2.0.0
 	 */
 	public function post_submitbox_misc_actions() {
 		global $post;
@@ -373,9 +345,7 @@ final class Short_Url {
 	/**
 	 * Save the short url on the post if it exsists.
 	 *
-	 * @param $post_id
-	 *
-	 * @since 2.0.0
+	 * @param int $post_id
 	 */
 	public function save_post( $post_id ) {
 		// Check if our nonce is set.
@@ -428,8 +398,6 @@ final class Short_Url {
 	 * @param string $value
 	 * @param int $post_id
 	 *
-	 * @since 2.0.0
-	 *
 	 * @return string
 	 */
 	public function generate_short_url( $value, $post_id ) {
@@ -473,8 +441,6 @@ final class Short_Url {
 
 	/**
 	 * Generate short url via wp ajax.
-	 *
-	 * @since 2.0.0
 	 */
 	public function wp_ajax_generate_short_url() {
 		$value   = isset( $_POST['value'] ) ? $_POST['value'] : '';
@@ -496,8 +462,6 @@ final class Short_Url {
 	 *
 	 * @param int $post_id
 	 * @param bool $only_short_url Default false
-	 *
-	 * @since 2.0.0
 	 *
 	 * @return mixed
 	 */

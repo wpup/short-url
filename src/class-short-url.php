@@ -151,7 +151,7 @@ final class Short_Url {
 		$req_uri = $_SERVER['REQUEST_URI'];
 
 		// If the request uri ends with a slash it should
-		if ( $req_uri[ strlen( $req_uri ) - 1 ] === '/' ) {
+		if ( isset( $req_uri[ strlen( $req_uri ) - 1 ] ) && $req_uri[ strlen( $req_uri ) - 1 ] === '/' ) {
 			return $query;
 		}
 

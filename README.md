@@ -5,12 +5,12 @@ Create a short url that redirects to the long url. Like Simple Address in EPiSer
 
 ![](screenshot.png)
 
-# Install
+## Install
 
 ```
-$ composer require frozzare/short-url
+composer require frozzare/short-url
 ```
 
-# License
+## License
 
 MIT © [Fredrik Forsmo](https://github.com/frozzare)

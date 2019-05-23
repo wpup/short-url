@@ -368,12 +368,7 @@ final class Short_Url {
 			return $post_id;
 		}
 
-		$value = $_POST['short_url_field'];
-
-		if ( empty( $value ) ) {
-			return $post_id;
-		}
-
+		$value      = $_POST['short_url_field'];
 		$value      = $this->generate_short_url( $value, $post_id );
 		$meta_value = $this->get_short_url( $post_id, true );
 

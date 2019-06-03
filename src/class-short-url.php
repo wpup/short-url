@@ -48,6 +48,10 @@ final class Short_Url {
 	 * @return array
 	 */
 	private function get_posts( $short_url, $no_cache = false ) {
+		if ( empty( $short_url ) ) {
+			return [];
+		}
+
 		$posts = wp_cache_get( sprintf( '%s:%s', $this->cache_key, $short_url ) );
 
 		if ( empty( $posts ) || $no_cache ) {
@@ -58,6 +62,11 @@ final class Short_Url {
 				'update_post_meta_cache' => false,
 				'update_post_term_cache' => false,
 				'meta_query'             => [
+					'relation' => 'AND',
+					[
+						'key'     => $meta_key,
+						'compare' => 'EXISTS'
+					],
 					[
 						'key'     => $meta_key,
 						'value'   => $short_url,
@@ -66,9 +75,7 @@ final class Short_Url {
 				]
 			];
 
-			$query = new WP_Query( $args );
-			$posts = $query->get_posts();
-
+			$posts = ( new WP_Query( $args ) )->posts;
 			$posts = array_filter( $posts, function ( $post ) use ( $meta_key, $short_url ) {
 				return get_post_meta( $post->ID, $meta_key, true ) === $short_url;
 			} );
@@ -380,7 +387,7 @@ final class Short_Url {
 
 		if ( is_null( $meta_value ) ) {
 			add_post_meta( $post_id, $this->meta_key, $value, true );
-		} else if ( ! is_null( $meta_value ) && ! is_null( $value ) ) {
+		} else if ( ! is_null( $meta_value ) && ! empty( $value ) ) {
 			update_post_meta( $post_id, $this->meta_key, $value );
 		} else {
 			delete_post_meta( $post_id, $this->meta_key );

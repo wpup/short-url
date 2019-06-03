@@ -398,6 +398,10 @@ final class Short_Url {
 	public function generate_short_url( $value, $post_id ) {
 		$value = sanitize_title( $value );
 
+		if ( empty( $value ) ) {
+			return '';
+		}
+
 		// If `url_to_postid` returns zero we can be sure that a url with the
 		// value don't exists and just return the value.
 		if ( url_to_postid( home_url( $value ) ) === 0 ) {

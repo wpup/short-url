@@ -40,6 +40,22 @@ final class Short_Url {
 	}
 
 	/**
+	 * Determine if is gutenberg or not.
+	 *
+	 * @return boolean
+	 */
+	private function is_gutenberg_page() {
+		// Gutenberg plugin.
+		if ( function_exists( 'is_gutenberg_page' ) && is_gutenberg_page()) {
+			return true;
+		}
+
+		// Gutenberg in WordPress
+		$current_screen = get_current_screen();
+		return method_exists( $current_screen, 'is_block_editor' ) && $current_screen->is_block_editor();
+	}
+
+	/**
 	 * Get all posts with the given short url.
 	 *
 	 * @param string $short_url
@@ -104,9 +120,30 @@ final class Short_Url {
 		if ( is_admin() ) {
 			add_action( 'admin_head', [$this, 'admin_head'] );
 			add_action( 'admin_footer', [$this, 'admin_footer'] );
-			add_action( 'post_submitbox_misc_actions', [$this, 'post_submitbox_misc_actions'] );
 			add_action( 'save_post', [$this, 'save_post'] );
 			add_action( 'wp_ajax_generate_short_url', [$this, 'wp_ajax_generate_short_url'] );
+			add_action( 'add_meta_boxes', [$this, 'add_meta_boxes'] );
+		}
+	}
+
+	/**
+	 * Add meta box for Gutenberg.
+	 */
+	public function add_meta_boxes() {
+		if ( $this->is_gutenberg_page() ) {
+			add_meta_box(
+				'short-url',
+				__( 'Short url', 'short-url' ),
+				[$this, 'post_submitbox_misc_actions'],
+				null,
+				'side',
+				'high',
+				[
+					'__block_editor_compatible_meta_box' => true,
+				]
+			);
+		} else {
+			add_action( 'post_submitbox_misc_actions', [$this, 'post_submitbox_misc_actions'] );
 		}
 	}
 
@@ -201,6 +238,7 @@ final class Short_Url {
 	public function admin_head() {
 		?>
 		<style type="text/css">
+
 			.short-url-show-view a:first-child {
 				color: #666;
 			}
@@ -217,8 +255,21 @@ final class Short_Url {
 				display: none;
 			}
 
-			.short-url-edit-view input[type="text"] {
+			#short_url_field {
 				width: 82%;
+			}
+
+			.block-editor .short-url {
+				padding-left: 0;
+			}
+
+			.block-editor .short-url-edit-view {
+				margin-top: 4px;
+			}
+
+			.block-editor #short_url_field {
+				margin-top: -4px;
+				width: auto;
 			}
 		</style>
 	<?php
@@ -314,9 +365,11 @@ final class Short_Url {
 
 		<div class="misc-pub-section short-url">
 
+			<?php if (! $this->is_gutenberg_page()): ?>
 			<label>
 				<strong><?php _e( 'Short url', 'short-url' ); ?>:</strong>
 			</label>
+			<?php endif; ?>
 
 			<p class="short-url-error-view hide">
 				<?php _e( 'No short url exists', 'short-url' ); ?>
